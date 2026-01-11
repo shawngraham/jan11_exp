@@ -101,9 +101,14 @@ which pdfinfo
 
    **Stage 1: Preprocessing (`preprocess.py`)**
    - Converts PDFs to images at optimal DPI (auto-calculated, ~100-150 DPI)
-   - Detects vertical column boundaries using OpenCV line detection
+   - Detects vertical column boundaries using **projection profile method**:
+     * Binarizes the image (Otsu's thresholding)
+     * Creates vertical projection (sums dark pixels per column)
+     * Smooths the profile to reduce noise
+     * Finds valleys (gaps) representing column boundaries
    - Splits pages into 5 columns, saves as separate PNG images
    - Outputs: `data/preprocessed/{pdf_name}/` with column images and metadata
+   - **Debug mode:** Use `--debug` flag to save visualization graphs
 
    **Stage 2: OCR (`process_pdfs.py`)**
    - Reads preprocessed column images from Stage 1
@@ -133,6 +138,25 @@ which pdfinfo
    - `tagged_articles.json` - Articles with classifications
    - `timeline.json` - Timeline events
    - `text_analysis.json` - Word clouds and statistics
+
+### Debugging Column Detection
+
+If column boundaries are not detected correctly, use debug mode:
+
+```bash
+python3 scripts/preprocess.py --debug
+```
+
+This will save visualization images to `data/preprocessed/{pdf_name}/debug/`:
+- **Top graph:** Projection profile showing darkness across page width
+  - Peaks = text-heavy areas
+  - Valleys (red dots) = column gaps
+- **Bottom image:** Original page with detected boundaries (red lines)
+
+**Common issues:**
+- **Too many/few columns detected:** Adjust `expected_columns` parameter in `preprocess.py`
+- **Boundaries in wrong places:** Check if PDFs have unusual layout (ads, illustrations spanning columns)
+- **No boundaries detected:** Falls back to even division - check debug graphs to see why valleys weren't found
 
 ---
 
