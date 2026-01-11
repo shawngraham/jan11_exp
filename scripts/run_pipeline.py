@@ -35,7 +35,8 @@ def main():
     print("=" * 60)
 
     scripts = [
-        "process_pdfs.py",
+        "preprocess.py",      # Step 1: Resize PDFs, detect columns, split into images
+        "process_pdfs.py",    # Step 2: Run OCR on preprocessed columns
         "segment_articles.py",
         "tag_articles.py",
         "generate_timeline.py",
