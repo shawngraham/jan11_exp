@@ -62,62 +62,60 @@ def smooth_projection(projection, window_size=15):
     return np.convolve(projection, kernel, mode='same')
 
 
-def find_valleys(projection, expected_columns=5, min_valley_depth=0.1):
+def find_peaks(projection, expected_columns=5, min_peak_height=0.2):
     """
-    Find valleys in projection profile that represent column gaps.
+    Find peaks in projection profile that represent vertical black divider lines.
 
     Args:
         projection: 1D array of vertical projection values
         expected_columns: Expected number of columns
-        min_valley_depth: Minimum depth of valley relative to peak (0-1)
+        min_peak_height: Minimum height of peak relative to max (0-1)
 
     Returns:
-        List of x-coordinates for valley centers (column boundaries)
+        List of x-coordinates for peak centers (column divider lines)
     """
-    # Invert projection so valleys become peaks
-    inverted = -projection
-
     # Normalize to 0-1 range
-    if inverted.max() > inverted.min():
-        inverted = (inverted - inverted.min()) / (inverted.max() - inverted.min())
+    if projection.max() > projection.min():
+        normalized = (projection - projection.min()) / (projection.max() - projection.min())
+    else:
+        return None
 
-    # Find local maxima in inverted projection (= valleys in original)
-    valleys = []
+    # Find local maxima (peaks = black vertical lines)
+    peaks = []
 
     # Simple peak detection: find points higher than neighbors
-    for i in range(1, len(inverted) - 1):
-        if inverted[i] > inverted[i-1] and inverted[i] > inverted[i+1]:
-            # Check if valley is deep enough
-            if inverted[i] > min_valley_depth:
-                valleys.append(i)
+    for i in range(1, len(normalized) - 1):
+        if normalized[i] > normalized[i-1] and normalized[i] > normalized[i+1]:
+            # Check if peak is tall enough
+            if normalized[i] > min_peak_height:
+                peaks.append(i)
 
-    # If we found reasonable number of valleys, return them
-    # We expect (expected_columns - 1) gaps between columns
-    expected_gaps = expected_columns - 1
+    # We expect (expected_columns - 1) divider lines between columns
+    expected_dividers = expected_columns - 1
 
-    if len(valleys) >= expected_gaps - 1:  # Allow 1 missing
-        # Sort by depth and take the deepest ones
-        valley_depths = [(v, inverted[v]) for v in valleys]
-        valley_depths.sort(key=lambda x: x[1], reverse=True)
+    if len(peaks) >= expected_dividers - 1:  # Allow 1 missing
+        # Sort by height and take the tallest ones (most prominent black lines)
+        peak_heights = [(p, normalized[p]) for p in peaks]
+        peak_heights.sort(key=lambda x: x[1], reverse=True)
 
-        # Take top expected_gaps valleys
-        top_valleys = [v[0] for v in valley_depths[:expected_gaps]]
-        top_valleys.sort()
+        # Take top expected_dividers peaks
+        top_peaks = [p[0] for p in peak_heights[:expected_dividers]]
+        top_peaks.sort()
 
-        return top_valleys
+        return top_peaks
 
     return None
 
 
 def detect_column_boundaries(image_array, expected_columns=5, debug=False, debug_path=None):
     """
-    Detect vertical column boundaries using projection profile method.
+    Detect vertical column boundaries by finding black vertical divider lines.
 
     This method:
     1. Binarizes the image
-    2. Creates vertical projection profile (sum of dark pixels per column)
-    3. Smooths the profile to reduce noise
-    4. Finds valleys (column gaps) in the profile
+    2. Uses morphological operations to enhance vertical lines
+    3. Creates projection profile from vertical lines only
+    4. Finds peaks (black divider lines) in the profile
 
     Args:
         image_array: Input image (BGR or grayscale)
@@ -137,18 +135,31 @@ def detect_column_boundaries(image_array, expected_columns=5, debug=False, debug
         gray = image_array
 
     # Binarize using Otsu's method
-    # This makes text/lines black (0) and background white (255)
+    # This makes text/lines black (255) and background white (0)
     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-    # Create vertical projection profile
-    # Sum each column - higher values = more dark pixels (text/lines)
-    projection = np.sum(binary, axis=0)
+    # Morphological operation to enhance VERTICAL lines specifically
+    # Create a vertical kernel (1 pixel wide, tall height)
+    # This will only match vertical structures like column dividers
+    vertical_kernel_height = max(height // 20, 50)  # At least 50 pixels tall
+    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, vertical_kernel_height))
+
+    # Apply morphological opening to extract vertical lines
+    # This removes horizontal lines and text, keeping only vertical structures
+    vertical_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, vertical_kernel)
+
+    # Additionally, use closing to connect broken vertical lines
+    vertical_lines = cv2.morphologyEx(vertical_lines, cv2.MORPH_CLOSE, vertical_kernel)
+
+    # Create vertical projection profile from ONLY the vertical lines
+    # Sum each column - higher values = more vertical line pixels
+    projection = np.sum(vertical_lines, axis=0)
 
     # Smooth to reduce noise
     smoothed = smooth_projection(projection, window_size=int(width / 100))
 
-    # Find valleys (column gaps)
-    valleys = find_valleys(smoothed, expected_columns=expected_columns)
+    # Find peaks (black divider lines)
+    peaks = find_peaks(smoothed, expected_columns=expected_columns, min_peak_height=0.2)
 
     # Debug visualization
     if debug and debug_path:
@@ -156,43 +167,53 @@ def detect_column_boundaries(image_array, expected_columns=5, debug=False, debug
         matplotlib.use('Agg')  # Non-interactive backend
         import matplotlib.pyplot as plt
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 8))
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
+
+        # Original image
+        ax1.imshow(cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB))
+        ax1.set_title('Original Image')
+        ax1.axis('off')
+
+        # Enhanced vertical lines
+        ax2.imshow(vertical_lines, cmap='gray')
+        ax2.set_title('Enhanced Vertical Lines (Morphological)')
+        ax2.axis('off')
 
         # Plot projection profile
-        ax1.plot(projection, label='Raw projection', alpha=0.3)
-        ax1.plot(smoothed, label='Smoothed projection', linewidth=2)
-        if valleys:
-            ax1.scatter(valleys, smoothed[valleys], color='red', s=100,
-                       zorder=5, label='Detected gaps')
-        ax1.set_xlabel('X Position (pixels)')
-        ax1.set_ylabel('Darkness (sum of pixels)')
-        ax1.set_title('Vertical Projection Profile')
-        ax1.legend()
-        ax1.grid(True, alpha=0.3)
+        ax3.plot(projection, label='Raw projection', alpha=0.3)
+        ax3.plot(smoothed, label='Smoothed projection', linewidth=2)
+        if peaks:
+            ax3.scatter(peaks, smoothed[peaks], color='red', s=100,
+                       zorder=5, label='Detected divider lines')
+        ax3.set_xlabel('X Position (pixels)')
+        ax3.set_ylabel('Darkness (vertical line pixels)')
+        ax3.set_title('Vertical Line Projection Profile')
+        ax3.legend()
+        ax3.grid(True, alpha=0.3)
 
         # Show image with detected boundaries
         display_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        if valleys:
-            for v in valleys:
-                cv2.line(display_img, (v, 0), (v, height), (0, 0, 255), 2)
-        ax2.imshow(cv2.cvtColor(display_img, cv2.COLOR_BGR2RGB))
-        ax2.set_title('Detected Column Boundaries')
-        ax2.axis('off')
+        if peaks:
+            for p in peaks:
+                cv2.line(display_img, (p, 0), (p, height), (0, 0, 255), 3)
+        ax4.imshow(cv2.cvtColor(display_img, cv2.COLOR_BGR2RGB))
+        ax4.set_title('Detected Column Dividers')
+        ax4.axis('off')
 
         plt.tight_layout()
         plt.savefig(debug_path, dpi=150, bbox_inches='tight')
         plt.close()
         print(f"      Debug visualization saved to {debug_path}")
 
-    # Convert valleys to boundaries
-    if valleys and len(valleys) >= expected_columns - 2:  # Allow some tolerance
-        boundaries = [0] + valleys + [width]
+    # Convert peaks (divider lines) to boundaries
+    if peaks and len(peaks) >= expected_columns - 2:  # Allow some tolerance
+        boundaries = [0] + peaks + [width]
         boundaries = sorted(list(set(boundaries)))
-        print(f"    Detected {len(boundaries)-1} columns using projection profile")
+        print(f"    Detected {len(boundaries)-1} columns using vertical line detection")
         return boundaries
 
     # Fallback: divide evenly
-    print(f"    Could not detect columns reliably, using even division")
+    print(f"    Could not detect column dividers reliably, using even division")
     boundaries = [int(width * i / expected_columns) for i in range(expected_columns + 1)]
     return boundaries
 
