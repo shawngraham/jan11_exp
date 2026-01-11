@@ -13,6 +13,8 @@ from pdf2image import convert_from_path
 import numpy as np
 import cv2
 from PIL import Image
+import gc
+from pdf2image import pdfinfo_from_path, convert_from_path
 
 # Increase PIL's decompression bomb limit for large newspaper scans
 Image.MAX_IMAGE_PIXELS = 500000000
@@ -28,6 +30,26 @@ if major_version >= 3:
     print("Using PaddleOCR 3.x")
     from paddleocr import PaddleOCR
     ocr = PaddleOCR(lang='en')
+    # PaddleOCR 3.x - use PPStructureV3 with newspaper layout model
+    print("Using PaddleOCR 3.x with PPStructureV3 (newspaper layout analysis)")
+    from paddleocr import PPStructureV3
+
+    try:
+        # Try newspaper-specific layout model first
+        ocr = PPStructureV3(
+            layout_model='picodet_lcnet_x1_0_layout_newspaper',
+            lang='en',
+            max_side_limit=8000, # Increase this from default 4000
+            limit_type='max'    # Ensure it uses the max side
+        )
+        print("✓ Loaded newspaper layout model")
+    except Exception as e:
+        print(f"Note: Newspaper model not available, using default layout model")
+        print(f"  Error: {e}")
+        ocr = PPStructureV3(
+            lang='en'
+        )
+    USE_STRUCTURE = True
 else:
     print("Using PaddleOCR 2.x")
     from paddleocr import PaddleOCR
@@ -203,84 +225,82 @@ def process_column_ocr(column_data):
 
 def process_pdf(pdf_path, output_dir):
     """
-    Process a single PDF file using column-based approach
-
-    Args:
-        pdf_path: Path to PDF file
-        output_dir: Directory to save processed images
-
-    Returns:
-        Dictionary with OCR results for all pages
+    M1 Silicon Optimized PDF Processor
     """
     pdf_name = Path(pdf_path).stem
     print(f"Processing {pdf_name}...")
 
-    # Convert PDF to images at 150 DPI (manageable for columns)
+    # 1. Get page count without loading images (Saves RAM)
     try:
-        images = convert_from_path(pdf_path, dpi=150)
-        print(f"  Converted {len(images)} pages at 150 DPI")
+        info = pdfinfo_from_path(pdf_path)
+        num_pages = info["Pages"]
     except Exception as e:
-        print(f"Error converting PDF {pdf_name}: {e}")
+        print(f"Poppler error: {e}. Try 'brew install poppler'")
         return None
+
+    # 150 DPI is the 'sweet spot' for newspapers on M1 (16GB RAM)
+    # If you have an 8GB Mac Mini, consider dropping this to 130
+    dpi = 150 if USE_STRUCTURE else 130
 
     pdf_results = {
         "filename": pdf_name,
         "source_pdf": pdf_path,
-        "num_pages": len(images),
+        "num_pages": num_pages,
         "pages": []
     }
 
-    # Process each page
-    for page_num, image in enumerate(images, 1):
-        print(f"  Processing page {page_num}/{len(images)}...")
+    for page_num in range(1, num_pages + 1):
+        print(f"  Page {page_num}/{num_pages}...")
 
-        # Save full page image
-        img_path = os.path.join(output_dir, f"{pdf_name}_page_{page_num}.jpg")
-        image.save(img_path, 'JPEG')
+        try:
+            # 2. Convert ONLY the current page
+            page_images = convert_from_path(
+                pdf_path, 
+                dpi=dpi, 
+                first_page=page_num, 
+                last_page=page_num,
+                thread_count=1 # M1 is fast; 1 thread keeps memory stable
+            )
+            
+            if not page_images: continue
+            image = page_images[0]
+            
+            # 3. Save and prepare
+            img_path = os.path.join(output_dir, f"{pdf_name}_page_{page_num}.jpg")
+            image.save(img_path, 'JPEG')
+            img_array = np.array(image)
 
-        # Convert to numpy array
-        img_array = np.array(image)
+            # 4. OCR Step (Fixed for PaddleOCR 3.0)
+            if USE_STRUCTURE:
+                # Use .predict() for V3
+                # Add 'slice' if you still get memory crashes on specific large pages
+                result = ocr.predict(img_array)
+                text_blocks = process_structure_result(result)
+                layout_info = extract_layout_info(result)
+            else:
+                result = ocr.ocr(img_array, cls=True)
+                text_blocks = process_standard_result(result)
+                layout_info = None
 
-        # Detect column boundaries
-        boundaries = detect_column_boundaries(img_array, expected_columns=5)
+            pdf_results["pages"].append({
+                "page_number": page_num,
+                "image_path": img_path,
+                "image_width": image.width,
+                "image_height": image.height,
+                "text_blocks": text_blocks,
+                "total_blocks": len(text_blocks),
+                "layout_regions": layout_info
+            })
 
-        # Split into columns
-        columns = split_into_columns(img_array, boundaries)
-        print(f"      Split into {len(columns)} columns")
+            # 5. AGGRESSIVE CLEANUP (Required for M1 Unified Memory)
+            del img_array
+            del image
+            del page_images
+            gc.collect() 
 
-        # Process each column separately (memory efficient)
-        all_text_blocks = []
-
-        for col_idx, column_data in enumerate(columns):
-            print(f"      Processing column {col_idx + 1}/{len(columns)}...", end=" ")
-
-            # OCR this column
-            column_blocks = process_column_ocr(column_data)
-            all_text_blocks.extend(column_blocks)
-
-            print(f"{len(column_blocks)} blocks")
-
-            # Free memory
-            del column_data['image']
-
-        # Store page results
-        page_results = {
-            "page_number": page_num,
-            "image_path": img_path,
-            "image_width": image.width,
-            "image_height": image.height,
-            "num_columns": len(columns),
-            "column_boundaries": boundaries,
-            "text_blocks": all_text_blocks,
-            "total_blocks": len(all_text_blocks)
-        }
-
-        pdf_results["pages"].append(page_results)
-        print(f"    Total: {len(all_text_blocks)} text blocks from {len(columns)} columns")
-
-        # Free memory
-        del img_array
-        del columns
+        except Exception as e:
+            print(f"  ! Error on page {page_num}: {e}")
+            pdf_results["pages"].append({"page_number": page_num, "error": str(e)})
 
     return pdf_results
 
