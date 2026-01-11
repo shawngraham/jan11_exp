@@ -25,13 +25,13 @@ version = paddleocr.__version__
 major_version = int(version.split('.')[0])
 
 if major_version >= 3:
-    # PaddleOCR 3.x - use PPStructure with newspaper layout model
-    print("Using PaddleOCR 3.x with PPStructure (newspaper layout analysis)")
-    from paddleocr import PPStructure
+    # PaddleOCR 3.x - use PPStructureV3 with newspaper layout model
+    print("Using PaddleOCR 3.x with PPStructureV3 (newspaper layout analysis)")
+    from paddleocr import PPStructureV3
 
     try:
         # Try newspaper-specific layout model first
-        ocr = PPStructure(
+        ocr = PPStructureV3(
             layout_model='picodet_lcnet_x1_0_layout_newspaper',
             show_log=False,
             lang='en'
@@ -40,7 +40,7 @@ if major_version >= 3:
     except Exception as e:
         print(f"Note: Newspaper model not available, using default layout model")
         print(f"  Error: {e}")
-        ocr = PPStructure(
+        ocr = PPStructureV3(
             show_log=False,
             lang='en'
         )
