@@ -1,1 +1,260 @@
-# jan11_exp
+# Whitechapel in Shawville
+
+> An interactive digital history exploration of how Jack the Ripper's murders reached rural Quebec through The Equity newspaper, 1888-1895
+
+**Live Site:** [Coming Soon - GitHub Pages URL]
+
+---
+
+## Project Overview
+
+This project explores a compelling question: **What does Jack the Ripper mean to Shawville?**
+
+Between 1888 and 1895, The Equity newspaper in Shawville, Quebec carried reports of the Whitechapel murders, creating curious intrusions of metropolitan horror into rural colonial life. This interactive website visualizes and analyzes these "motes of space-time"—moments when London's East End violence reached an anglophone village in western Quebec.
+
+### Research Questions
+
+- How did global news reach rural anglophone Quebec in the late 19th century?
+- What do these articles reveal about metropolis-hinterland relationships?
+- How was British identity constructed and maintained in a colonial context?
+- What role did sensational crime play in bridging geographic and cultural distance?
+
+---
+
+## Features
+
+### 📅 Dual Timeline
+Interactive visualization showing London murders alongside Shawville publications, revealing the time lag of transatlantic news transmission.
+
+### 📰 Newspaper Page Viewer
+Visualizes article layouts with Whitechapel stories highlighted as glowing "portals"—spatial intrusions of London into Shawville.
+
+### 📊 Text Analysis
+Word clouds, frequency charts, and sensational language analysis reveal how The Equity framed the murders.
+
+### 🔍 Searchable Archive
+Browse and search all extracted articles with filtering by topic, date, and content.
+
+### 🎨 Period Aesthetic
+Design evokes 19th-century newspapers with aged paper textures, serif typography, and Victorian styling.
+
+---
+
+## Data Processing Pipeline
+
+### Prerequisites
+
+```bash
+# Python 3.8+
+python3 --version
+
+# Install dependencies
+cd scripts
+pip install -r requirements.txt
+```
+
+### Required Dependencies
+
+- **PaddleOCR**: Advanced OCR for newspaper digitization
+- **pdf2image**: PDF to image conversion
+- **OpenCV**: Image processing
+- **PIL/Pillow**: Image manipulation
+- **NumPy**: Numerical operations
+
+### Running the Pipeline
+
+1. **Add PDFs to the `pdf/` folder**
+   - Place your newspaper PDF files in the `pdf/` directory
+   - The pipeline expects PDFs from BAnQ or similar archives
+
+2. **Run the full pipeline:**
+   ```bash
+   python3 scripts/run_pipeline.py
+   ```
+
+   This executes five steps in sequence:
+   1. `process_pdfs.py` - OCR extraction with bounding boxes
+   2. `segment_articles.py` - Article segmentation and layout detection
+   3. `tag_articles.py` - Automated content classification
+   4. `generate_timeline.py` - Timeline data generation
+   5. `analyze_text.py` - Word frequency and sentiment analysis
+
+3. **Output:**
+   Generated files in `data/processed/`:
+   - `articles.json` - All extracted articles
+   - `tagged_articles.json` - Articles with classifications
+   - `timeline.json` - Timeline events
+   - `text_analysis.json` - Word clouds and statistics
+
+---
+
+## Project Structure
+
+```
+/
+├── index.html                  # Main website
+├── css/
+│   ├── main.css               # Core styles & period aesthetic
+│   ├── timeline.css           # Timeline visualization
+│   ├── newspaper.css          # Newspaper page viewer
+│   └── visualizations.css     # Charts and graphs
+├── js/
+│   ├── main.js                # Application orchestration
+│   ├── utils.js               # Helper functions
+│   ├── timeline.js            # Dual timeline component
+│   ├── newspaper-viewer.js    # Page layout visualization
+│   ├── text-viz.js            # Text analysis charts
+│   └── browser.js             # Article search/filter
+├── scripts/
+│   ├── requirements.txt       # Python dependencies
+│   ├── run_pipeline.py        # Master pipeline runner
+│   ├── process_pdfs.py        # OCR processing
+│   ├── segment_articles.py    # Article extraction
+│   ├── tag_articles.py        # Content classification
+│   ├── generate_timeline.py   # Timeline generation
+│   └── analyze_text.py        # Text analysis
+├── data/
+│   ├── raw/                   # OCR output
+│   └── processed/             # Structured data files
+├── pdf/                       # Source PDFs (add here)
+└── assets/
+    └── images/                # Images and textures
+```
+
+---
+
+## Technology Stack
+
+### Frontend
+- **HTML5/CSS3**: Semantic markup and modern styling
+- **Vanilla JavaScript**: No framework dependencies
+- **D3.js v7**: Data visualizations
+- **Scrollama**: Scrollytelling interactions
+- **GSAP**: Smooth animations
+
+### Backend/Processing
+- **Python 3.8+**: Data processing
+- **PaddleOCR**: OCR engine
+- **NumPy/OpenCV**: Image processing
+
+### Hosting
+- **GitHub Pages**: Static site hosting
+- **No server required**: Fully client-side application
+
+---
+
+## Development
+
+### Local Development
+
+1. **Clone and navigate:**
+   ```bash
+   git clone <repository-url>
+   cd jan11_exp
+   ```
+
+2. **Add PDFs to `pdf/` folder**
+
+3. **Run data pipeline:**
+   ```bash
+   python3 scripts/run_pipeline.py
+   ```
+
+4. **Serve locally:**
+   ```bash
+   # Using Python
+   python3 -m http.server 8000
+
+   # Or using Node.js
+   npx http-server
+   ```
+
+5. **Open browser:**
+   Navigate to `http://localhost:8000`
+
+### Testing Without Data
+
+The website will display warnings if data files are missing, but the HTML/CSS/JS structure can still be previewed.
+
+---
+
+## Historical Context
+
+### Shawville, Quebec
+
+Founded by Irish Protestant settlers after 1815, Shawville was incorporated in 1873. The Pontiac and Pacific Junction Railway arrived in 1886, transforming the village into a regional hub. By the 1880s, it was an overwhelmingly anglophone (85%) and Protestant (75%) community in western Quebec's Pontiac County.
+
+### The Equity Newspaper
+
+Founded June 7, 1883 by John Cowan and Henry Thomas Smith, The Equity began in Bryson, Quebec before moving to Shawville in October 1888—the very autumn of the Whitechapel murders. As "the Voice of the Pontiac since 1883," it brought world news to rural readers through telegraph dispatches and syndicated content.
+
+### The Whitechapel Murders
+
+Between August and November 1888, at least five women were murdered in London's Whitechapel district. The case became an international sensation, with newspapers worldwide covering the "Jack the Ripper" killings. These reports reached Shawville within days or weeks, creating transnational moments of shared horror.
+
+---
+
+## Data Sources
+
+### Primary Sources
+- **The Equity** (Shawville, Quebec), 1888-1895
+- Digitized by Bibliothèque et Archives nationales du Québec (BAnQ)
+- Seven newspaper issues containing Whitechapel references
+
+### Historical Context
+- QAHN (Quebec Anglophone Heritage Network)
+- Municipality of Shawville historical archives
+- Whitechapel murder chronologies
+
+---
+
+## Citations
+
+Sugden, Philip. *The Complete History of Jack the Ripper*. Carroll & Graf, 2002.
+
+*The Equity*. "About The Equity." https://theequity.ca/about-the-equity/
+
+QAHN. "Shawville: Historic Hub of the Pontiac." https://qahn.org/article/shawville-historic-hub-pontiac
+
+Municipality of Shawville. "History of Shawville." https://shawville.ca/municipality-of-shawville/history-of-shawville/
+
+Bibliothèque et Archives nationales du Québec (BAnQ). Digital collections.
+
+---
+
+## Credits
+
+**Research & Development:** Dr. Shawn Graham
+
+**Built with:**
+- D3.js for data visualization
+- Scrollama for scrollytelling
+- GSAP for animations
+- PaddleOCR for text extraction
+
+---
+
+## License
+
+[Add your chosen license here]
+
+---
+
+## Future Enhancements
+
+- [ ] Add audio narration
+- [ ] Include original page images alongside transcriptions
+- [ ] Comparative analysis with other colonial newspapers
+- [ ] Network visualization of information flow
+- [ ] Geographic mapping of news sources
+- [ ] Export functionality for research use
+
+---
+
+## Contact
+
+For questions or collaboration inquiries, please [open an issue](https://github.com/yourusername/jan11_exp/issues) or contact Dr. Shawn Graham.
+
+---
+
+*This project demonstrates how digital humanities methods can illuminate the networks connecting metropolis and hinterland in the late 19th century.*

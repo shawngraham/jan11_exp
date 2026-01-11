@@ -1,0 +1,224 @@
+/* ==================================
+   TIMELINE VISUALIZATION
+   Dual-track timeline styling
+   ================================== */
+
+.timeline-container {
+    width: 100%;
+    min-height: 500px;
+    background: var(--color-paper-light);
+    border: 1px solid var(--color-paper-dark);
+    padding: var(--spacing-lg) var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+    position: relative;
+    overflow-x: auto;
+}
+
+/* SVG Container */
+.timeline-svg {
+    width: 100%;
+    min-width: 1200px;
+    display: block;
+}
+
+/* Timeline Tracks */
+.timeline-track {
+    fill: none;
+    stroke: var(--color-ink-faded);
+    stroke-width: 2px;
+    opacity: 0.3;
+}
+
+.timeline-track.london {
+    stroke: var(--color-london);
+}
+
+.timeline-track.shawville {
+    stroke: var(--color-shawville);
+}
+
+/* Timeline Events */
+.timeline-event {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.timeline-event circle {
+    transition: all 0.3s ease;
+}
+
+.timeline-event.london circle {
+    fill: var(--color-london);
+    stroke: var(--color-ink);
+    stroke-width: 2px;
+}
+
+.timeline-event.shawville circle {
+    fill: var(--color-shawville);
+    stroke: var(--color-ink);
+    stroke-width: 2px;
+}
+
+.timeline-event:hover circle {
+    r: 10;
+    stroke-width: 3px;
+}
+
+.timeline-event.murder circle {
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 4px rgba(139, 0, 0, 0.5));
+}
+
+/* Connection Lines (showing lag) */
+.timeline-connection {
+    stroke: var(--color-ripper-light);
+    stroke-width: 1px;
+    stroke-dasharray: 4, 4;
+    opacity: 0.4;
+    fill: none;
+}
+
+.timeline-connection.highlighted {
+    opacity: 0.8;
+    stroke-width: 2px;
+    stroke: var(--color-ripper);
+}
+
+/* Timeline Labels */
+.timeline-label {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    fill: var(--color-ink-faded);
+    text-anchor: middle;
+}
+
+.timeline-label.track-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    fill: var(--color-ink);
+    text-anchor: start;
+}
+
+.timeline-date-label {
+    font-size: 0.7rem;
+    fill: var(--color-ink-light);
+}
+
+/* Tooltip */
+.timeline-tooltip {
+    position: absolute;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    padding: var(--spacing-sm);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.timeline-tooltip.visible {
+    opacity: 1;
+}
+
+.timeline-tooltip-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--color-ripper-light);
+}
+
+.timeline-tooltip-date {
+    font-size: 0.8rem;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+}
+
+.timeline-tooltip-description {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.timeline-tooltip-lag {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+/* Axis styling */
+.timeline-axis path,
+.timeline-axis line {
+    stroke: var(--color-ink-faded);
+    stroke-width: 1px;
+}
+
+.timeline-axis text {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    fill: var(--color-ink-faded);
+}
+
+/* Scrollbar styling for timeline container */
+.timeline-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.timeline-container::-webkit-scrollbar-track {
+    background: var(--color-paper-dark);
+}
+
+.timeline-container::-webkit-scrollbar-thumb {
+    background: var(--color-ink-faded);
+    border-radius: 4px;
+}
+
+.timeline-container::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink);
+}
+
+/* Animation classes */
+.timeline-event {
+    opacity: 0;
+    animation: fadeInScale 0.5s ease forwards;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Stagger animation delays (applied via JS) */
+.timeline-event:nth-child(1) { animation-delay: 0.1s; }
+.timeline-event:nth-child(2) { animation-delay: 0.2s; }
+.timeline-event:nth-child(3) { animation-delay: 0.3s; }
+.timeline-event:nth-child(4) { animation-delay: 0.4s; }
+.timeline-event:nth-child(5) { animation-delay: 0.5s; }
+.timeline-event:nth-child(6) { animation-delay: 0.6s; }
+.timeline-event:nth-child(7) { animation-delay: 0.7s; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .timeline-container {
+        padding: var(--spacing-md) var(--spacing-sm);
+    }
+
+    .timeline-svg {
+        min-width: 800px;
+    }
+
+    .timeline-tooltip {
+        max-width: 250px;
+        font-size: 0.8rem;
+    }
+}

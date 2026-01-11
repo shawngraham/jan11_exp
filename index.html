@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whitechapel in Shawville | The Intrusion of Horror</title>
+    <meta name="description" content="An interactive exploration of how Jack the Ripper's murders reached rural Quebec through The Equity newspaper, 1888-1895">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/timeline.css">
+    <link rel="stylesheet" href="css/newspaper.css">
+    <link rel="stylesheet" href="css/visualizations.css">
+
+    <!-- External Libraries -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/intersection-observer@0.12.0/intersection-observer.js"></script>
+    <script src="https://unpkg.com/scrollama"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section id="hero" class="section-full">
+        <div class="hero-content">
+            <h1 class="hero-title">Whitechapel<br>in<br>Shawville</h1>
+            <p class="hero-subtitle">What does Jack the Ripper mean to a village in rural Quebec?</p>
+            <div class="scroll-indicator">
+                <span>Scroll to explore</span>
+                <div class="scroll-arrow"></div>
+            </div>
+        </div>
+        <div class="hero-background"></div>
+    </section>
+
+    <!-- Introduction -->
+    <section id="introduction" class="section">
+        <div class="container">
+            <div class="content-block">
+                <h2>A Question of Distance</h2>
+                <p class="lead">In 1888, as Jack the Ripper stalked the fog-shrouded streets of London's Whitechapel district, a small anglophone village in western Quebec was also confronting these horrors&mdash;through the pages of its local newspaper.</p>
+
+                <div class="context-grid">
+                    <div class="context-card">
+                        <h3>Shawville</h3>
+                        <p>Founded by Irish Protestant settlers after 1815, Shawville was incorporated as a municipality in 1873. By the 1880s, the arrival of the Pontiac and Pacific Junction Railway in 1886 had transformed this overwhelmingly anglophone community into a hub of the Pontiac region.</p>
+                    </div>
+
+                    <div class="context-card">
+                        <h3>The Equity</h3>
+                        <p>Established on June 7, 1883, by John Cowan and Henry Thomas Smith, <em>The Equity</em> began in nearby Bryson before moving to Shawville in October 1888&mdash;the very autumn of the Whitechapel murders. As "the Voice of the Pontiac," it brought world news to the village.</p>
+                    </div>
+                </div>
+
+                <p>Between 1888 and 1895, <em>The Equity</em> carried reports of the Whitechapel murders, creating curious intrusions of metropolitan horror into the fabric of rural colonial life. These were more than mere news items&mdash;they were windows into how global events reached the hinterland, how British identity was constructed and maintained across an ocean, and how sensational crime bridged the distance between metropolis and colony.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Timeline Section -->
+    <section id="timeline-section" class="section section-dark">
+        <div class="container-wide">
+            <div class="section-header">
+                <h2>The Intrusion</h2>
+                <p class="section-subtitle">When did horror cross the Atlantic?</p>
+            </div>
+
+            <div id="dual-timeline" class="timeline-container">
+                <!-- Timeline will be rendered by D3.js -->
+            </div>
+
+            <div class="timeline-legend">
+                <div class="legend-item">
+                    <span class="legend-marker london"></span>
+                    <span>London Events</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-marker shawville"></span>
+                    <span>Shawville Publications</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newspaper Pages Section -->
+    <section id="newspaper-pages" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Motes of Space-Time</h2>
+                <p class="section-subtitle">The Whitechapel articles were like little portals&mdash;moments where London intruded into Shawville. What surrounded them on the page?</p>
+            </div>
+        </div>
+
+        <div id="newspaper-viewer" class="newspaper-viewer">
+            <!-- Newspaper pages will be rendered here -->
+        </div>
+
+        <div class="container">
+            <p class="helper-text">Click on highlighted articles to read them</p>
+        </div>
+    </section>
+
+    <!-- Data Visualization Section -->
+    <section id="data-viz" class="section section-light">
+        <div class="container">
+            <div class="section-header">
+                <h2>The Pattern</h2>
+                <p class="section-subtitle">How much space did distant murders occupy in the local consciousness?</p>
+            </div>
+
+            <div class="viz-grid">
+                <div class="viz-card">
+                    <h3>Coverage Over Time</h3>
+                    <div id="frequency-chart"></div>
+                </div>
+
+                <div class="viz-card">
+                    <h3>Article Types</h3>
+                    <div id="article-breakdown"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Text Analysis Section -->
+    <section id="text-analysis" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>The Language of Horror</h2>
+                <p class="section-subtitle">How did <em>The Equity</em> frame the Whitechapel murders?</p>
+            </div>
+
+            <div class="analysis-container">
+                <div class="word-cloud-wrapper">
+                    <div id="word-cloud"></div>
+                </div>
+
+                <div class="sensational-words">
+                    <h3>Sensational Language</h3>
+                    <div id="sensational-list"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Empire Context Section -->
+    <section id="empire-context" class="section section-dark">
+        <div class="container">
+            <div class="section-header">
+                <h2>Empire's Echo</h2>
+                <p class="section-subtitle">Whitechapel wasn't alone. What other British news arrived alongside the murders?</p>
+            </div>
+
+            <div id="empire-viz" class="empire-visualization">
+                <!-- Empire context visualization -->
+            </div>
+
+            <div class="content-block">
+                <p>The Whitechapel murders appeared within a broader stream of British Empire news&mdash;parliamentary debates, colonial affairs, royal announcements. Together, these articles constructed and maintained British identity in this anglophone corner of Quebec, linking the village to the metropolis through shared language, culture, and concern.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Archive Browser Section -->
+    <section id="archive" class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>The Archive</h2>
+                <p class="section-subtitle">Explore all articles from The Equity, 1888-1895</p>
+            </div>
+
+            <div class="archive-controls">
+                <input type="text" id="search-input" placeholder="Search articles..." class="search-box">
+                <div class="filter-tags" id="filter-tags">
+                    <!-- Filter tags will be generated -->
+                </div>
+            </div>
+
+            <div id="article-grid" class="article-grid">
+                <!-- Articles will be rendered here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Conclusion Section -->
+    <section id="conclusion" class="section">
+        <div class="container">
+            <div class="content-block conclusion">
+                <h2>Metropolis and Hinterland</h2>
+
+                <p class="lead">What, then, does Jack the Ripper mean to Shawville?</p>
+
+                <p>The Whitechapel articles in <em>The Equity</em> reveal the complex web connecting metropolis and hinterland in the late 19th century. They demonstrate how global news networks operated across vast distances, how sensational crime traveled through telegraph lines and steamship routes to reach rural readers within days or weeks of London events.</p>
+
+                <p>More profoundly, they show how British identity was constructed and reinforced in an anglophone community within French Canada. The murders weren't just news&mdash;they were shared cultural reference points, affirming connections to the mother country even as Canada built its own national identity.</p>
+
+                <p>These articles were indeed "motes of space-time"&mdash;moments when distant horror intruded into local life, when the violence of London's East End became conversation in Shawville's streets, when the metropolis reached into the hinterland and made itself felt.</p>
+
+                <p>In studying these intrusions, we glimpse the information networks, cultural anxieties, and colonial relationships that shaped life in rural Quebec at the turn of the 20th century.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Methodology & Citations -->
+    <section id="methodology" class="section section-light">
+        <div class="container">
+            <div class="content-block">
+                <h2>Methodology & Sources</h2>
+
+                <h3>Data Collection</h3>
+                <p>This project analyzes digitized issues of <em>The Equity</em> newspaper (1888-1895) from the Bibliothèque et Archives nationales du Québec (BAnQ). Seven newspaper issues containing references to Whitechapel were identified through BAnQ's digital search tools.</p>
+
+                <h3>Processing Pipeline</h3>
+                <p>PDFs were processed using PaddleOCR for optical character recognition, followed by automated article segmentation, classification, and text analysis. The processing scripts are available in the project repository.</p>
+
+                <h3>Citations</h3>
+                <ul class="citations">
+                    <li><em>The Equity</em> (Shawville, Quebec), 1888-1895. Bibliothèque et Archives nationales du Québec (BAnQ).</li>
+                    <li>QAHN (Quebec Anglophone Heritage Network). "Shawville: Historic Hub of the Pontiac." <a href="https://qahn.org/article/shawville-historic-hub-pontiac" target="_blank">https://qahn.org/article/shawville-historic-hub-pontiac</a></li>
+                    <li>"History of Shawville." Municipality of Shawville. <a href="https://shawville.ca/municipality-of-shawville/history-of-shawville/" target="_blank">https://shawville.ca/municipality-of-shawville/history-of-shawville/</a></li>
+                    <li>"About The Equity." <em>The Equity</em>. <a href="https://theequity.ca/about-the-equity/" target="_blank">https://theequity.ca/about-the-equity/</a></li>
+                    <li>Sugden, Philip. <em>The Complete History of Jack the Ripper</em>. Carroll & Graf, 2002.</li>
+                </ul>
+
+                <h3>Project Credits</h3>
+                <p>Research and development: Dr. Shawn Graham<br>
+                Built with D3.js, Scrollama, and GSAP<br>
+                Source code available on GitHub</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 Whitechapel in Shawville. An exploration of digital history and newspaper archives.</p>
+        </div>
+    </footer>
+
+    <!-- Article Modal -->
+    <div id="article-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/utils.js"></script>
+    <script src="js/timeline.js"></script>
+    <script src="js/newspaper-viewer.js"></script>
+    <script src="js/text-viz.js"></script>
+    <script src="js/browser.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

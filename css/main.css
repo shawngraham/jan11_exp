@@ -1,0 +1,526 @@
+/* ==================================
+   WHITECHAPEL IN SHAWVILLE
+   Main Stylesheet
+   ================================== */
+
+/* ==================================
+   CSS Variables - Period Aesthetic
+   ================================== */
+:root {
+    /* Colors - Aged Paper & Ink */
+    --color-paper: #f4f1e8;
+    --color-paper-dark: #e8dcc4;
+    --color-paper-light: #faf8f3;
+    --color-ink: #1a1a1a;
+    --color-ink-faded: #4a4a4a;
+    --color-ink-light: #6b6b6b;
+
+    /* Accent Colors */
+    --color-ripper: #8b0000; /* Dark red for Whitechapel */
+    --color-ripper-light: #a52a2a;
+    --color-london: #8b0000;
+    --color-shawville: #2f4f4f; /* Dark slate */
+
+    /* Typography */
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Crimson Text', serif;
+    --font-mono: 'Courier Prime', monospace;
+
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 2rem;
+    --spacing-lg: 4rem;
+    --spacing-xl: 6rem;
+
+    /* Layout */
+    --container-width: 1200px;
+    --container-narrow: 800px;
+    --container-wide: 1400px;
+
+    /* Transitions */
+    --transition: all 0.3s ease;
+}
+
+/* ==================================
+   Reset & Base Styles
+   ================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--color-ink);
+    background-color: var(--color-paper);
+    overflow-x: hidden;
+}
+
+/* ==================================
+   Typography
+   ================================== */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-ink);
+}
+
+h1 {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+}
+
+h2 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    margin-bottom: var(--spacing-md);
+}
+
+h3 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+}
+
+p {
+    margin-bottom: var(--spacing-sm);
+}
+
+.lead {
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--color-ink-faded);
+    margin-bottom: var(--spacing-md);
+}
+
+em {
+    font-style: italic;
+}
+
+strong {
+    font-weight: 600;
+}
+
+a {
+    color: var(--color-ripper);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-ripper-light);
+    transition: var(--transition);
+}
+
+a:hover {
+    color: var(--color-ripper-light);
+    border-bottom-color: var(--color-ripper);
+}
+
+/* ==================================
+   Layout Containers
+   ================================== */
+.container {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+.container-narrow {
+    max-width: var(--container-narrow);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+.container-wide {
+    max-width: var(--container-wide);
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+/* ==================================
+   Sections
+   ================================== */
+.section {
+    padding: var(--spacing-xl) 0;
+    position: relative;
+}
+
+.section-full {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-dark {
+    background-color: var(--color-paper-dark);
+}
+
+.section-light {
+    background-color: var(--color-paper-light);
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-subtitle {
+    font-size: 1.25rem;
+    font-style: italic;
+    color: var(--color-ink-light);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ==================================
+   Hero Section
+   ================================== */
+#hero {
+    position: relative;
+    background: linear-gradient(135deg, var(--color-paper-dark) 0%, var(--color-paper) 100%);
+    overflow: hidden;
+}
+
+.hero-content {
+    text-align: center;
+    z-index: 2;
+    position: relative;
+}
+
+.hero-title {
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 0.9;
+    margin-bottom: var(--spacing-md);
+    text-transform: uppercase;
+    color: var(--color-ink);
+}
+
+.hero-subtitle {
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    font-style: italic;
+    color: var(--color-ink-faded);
+    max-width: 600px;
+    margin: 0 auto var(--spacing-lg);
+}
+
+.hero-background {
+    position: absolute;
+    inset: 0;
+    opacity: 0.1;
+    background-image:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            var(--color-ink) 2px,
+            var(--color-ink) 3px
+        );
+    pointer-events: none;
+}
+
+.scroll-indicator {
+    margin-top: var(--spacing-lg);
+    animation: fadeInUp 1s ease 1s both;
+}
+
+.scroll-indicator span {
+    display: block;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-ink-light);
+    margin-bottom: var(--spacing-xs);
+}
+
+.scroll-arrow {
+    width: 2px;
+    height: 40px;
+    background: var(--color-ink-light);
+    margin: 0 auto;
+    position: relative;
+    animation: scrollBounce 2s ease-in-out infinite;
+}
+
+.scroll-arrow::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--color-ink-light);
+    border-bottom: 2px solid var(--color-ink-light);
+    transform: translateX(-50%) rotate(45deg);
+}
+
+@keyframes scrollBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(10px);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==================================
+   Content Blocks
+   ================================== */
+.content-block {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.content-block p + p {
+    margin-top: var(--spacing-sm);
+}
+
+/* ==================================
+   Context Grid
+   ================================== */
+.context-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.context-card {
+    background: var(--color-paper-light);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-paper-dark);
+    box-shadow:
+        2px 2px 0 rgba(0, 0, 0, 0.1),
+        4px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.context-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--color-ripper);
+    padding-bottom: var(--spacing-xs);
+}
+
+/* ==================================
+   Visualization Grids
+   ================================== */
+.viz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.viz-card {
+    background: var(--color-paper-light);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-paper-dark);
+    min-height: 400px;
+}
+
+.viz-card h3 {
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    font-size: 1.3rem;
+}
+
+/* ==================================
+   Helper Text
+   ================================== */
+.helper-text {
+    text-align: center;
+    font-style: italic;
+    color: var(--color-ink-light);
+    margin-top: var(--spacing-md);
+}
+
+/* ==================================
+   Legend
+   ================================== */
+.timeline-legend {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.legend-marker {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.legend-marker.london {
+    background-color: var(--color-london);
+}
+
+.legend-marker.shawville {
+    background-color: var(--color-shawville);
+}
+
+/* ==================================
+   Citations
+   ================================== */
+.citations {
+    list-style: none;
+    padding-left: 0;
+}
+
+.citations li {
+    margin-bottom: var(--spacing-sm);
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.citations li::before {
+    content: '▪';
+    position: absolute;
+    left: 0;
+    color: var(--color-ripper);
+}
+
+/* ==================================
+   Modal
+   ================================== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    overflow-y: auto;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--color-paper);
+    margin: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border: 2px solid var(--color-ink);
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-md);
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--color-ink-faded);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: var(--color-ripper);
+}
+
+/* ==================================
+   Footer
+   ================================== */
+.site-footer {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+    padding: var(--spacing-lg) 0;
+    text-align: center;
+}
+
+.site-footer a {
+    color: var(--color-paper);
+    border-bottom-color: var(--color-paper);
+}
+
+/* ==================================
+   Responsive Design
+   ================================== */
+@media (max-width: 768px) {
+    :root {
+        --spacing-lg: 3rem;
+        --spacing-xl: 4rem;
+    }
+
+    .context-grid,
+    .viz-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section {
+        padding: var(--spacing-lg) 0;
+    }
+
+    .modal-content {
+        padding: var(--spacing-md);
+        width: 95%;
+    }
+}
+
+@media (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+
+    :root {
+        --spacing-lg: 2rem;
+        --spacing-xl: 3rem;
+    }
+}
+
+/* ==================================
+   Print Styles
+   ================================== */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+
+    .scroll-indicator,
+    .site-footer,
+    .modal {
+        display: none;
+    }
+
+    .section {
+        page-break-inside: avoid;
+    }
+}
