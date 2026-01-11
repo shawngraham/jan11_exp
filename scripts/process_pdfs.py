@@ -13,6 +13,8 @@ from pdf2image import convert_from_path
 import numpy as np
 import paddleocr
 from PIL import Image
+import gc
+from pdf2image import pdfinfo_from_path, convert_from_path
 
 # Increase PIL's decompression bomb limit for large newspaper scans
 # Default is ~178 MP, we're increasing to 500 MP to handle high-res PDFs
@@ -33,7 +35,9 @@ if major_version >= 3:
         # Try newspaper-specific layout model first
         ocr = PPStructureV3(
             layout_model='picodet_lcnet_x1_0_layout_newspaper',
-            lang='en'
+            lang='en',
+            max_side_limit=8000, # Increase this from default 4000
+            limit_type='max'    # Ensure it uses the max side
         )
         print("✓ Loaded newspaper layout model")
     except Exception as e:
@@ -186,7 +190,7 @@ def process_standard_result(result):
 
 def process_pdf(pdf_path, output_dir):
     """
-    Process a single PDF file
+    Process a single PDF file page-by-page to minimize memory usage.
 
     Args:
         pdf_path: Path to PDF file
@@ -198,45 +202,61 @@ def process_pdf(pdf_path, output_dir):
     pdf_name = Path(pdf_path).stem
     print(f"Processing {pdf_name}...")
 
-    # Convert PDF to images
-    # PPStructure analyzes layout first, then processes regions separately
-    # This allows higher DPI without memory issues
-    dpi = 200 if USE_STRUCTURE else 150
+    # Get page count without loading the actual images into RAM
     try:
-        images = convert_from_path(pdf_path, dpi=dpi)
-        print(f"  Converted at {dpi} DPI")
+        info = pdfinfo_from_path(pdf_path)
+        num_pages = info["Pages"]
+        print(f"  Found {num_pages} pages")
     except Exception as e:
-        print(f"Error converting PDF {pdf_name}: {e}")
+        print(f"Error reading PDF info for {pdf_name}: {e}")
         return None
+
+    # Determine DPI based on engine
+    dpi = 150 if USE_STRUCTURE else 130
 
     pdf_results = {
         "filename": pdf_name,
         "source_pdf": pdf_path,
-        "num_pages": len(images),
+        "num_pages": num_pages,
         "pages": []
     }
 
-    # Process each page
-    for page_num, image in enumerate(images, 1):
-        print(f"  Processing page {page_num}/{len(images)}...")
+    # Process each page individually
+    for page_num in range(1, num_pages + 1):
+        print(f"  Processing page {page_num}/{num_pages}...")
 
-        # Save page image
-        img_path = os.path.join(output_dir, f"{pdf_name}_page_{page_num}.jpg")
-        image.save(img_path, 'JPEG')
-
-        # Convert PIL image to numpy array for PaddleOCR
-        img_array = np.array(image)
-
-        # Run OCR with layout analysis (PPStructure) or standard OCR
         try:
+            # ONLY convert the current page to an image to save RAM
+            # Using thread_count=1 ensures we don't spike CPU/RAM with parallel conversion
+            page_images = convert_from_path(
+                pdf_path, 
+                dpi=dpi, 
+                first_page=page_num, 
+                last_page=page_num,
+                thread_count=1
+            )
+            
+            if not page_images:
+                continue
+                
+            image = page_images[0]
+            
+            # Save page image to disk
+            img_path = os.path.join(output_dir, f"{pdf_name}_page_{page_num}.jpg")
+            image.save(img_path, 'JPEG')
+
+            # Convert PIL image to numpy array for PaddleOCR
+            img_array = np.array(image)
+
+            # Run OCR with layout analysis (PPStructure) or standard OCR
             if USE_STRUCTURE:
-                # PPStructure returns layout regions with OCR results
-                result = ocr(img_array)
+                # PPStructureV3: Use .predict() NOT the object as a function
+                result = ocr.predict(img_array)
                 text_blocks = process_structure_result(result)
                 layout_info = extract_layout_info(result)
             else:
                 # Standard OCR for PaddleOCR 2.x
-                result = ocr.predict(img_array)
+                result = ocr.ocr(img_array, cls=True)
                 text_blocks = process_standard_result(result)
                 layout_info = None
 
@@ -247,7 +267,7 @@ def process_pdf(pdf_path, output_dir):
                 "image_height": image.height,
                 "text_blocks": text_blocks,
                 "total_blocks": len(text_blocks),
-                "layout_regions": layout_info  # Column/region information from PPStructure
+                "layout_regions": layout_info
             }
 
             pdf_results["pages"].append(page_results)
@@ -257,12 +277,20 @@ def process_pdf(pdf_path, output_dir):
             else:
                 print()
 
+            # Explicit cleanup for the current page
+            del img_array
+            del image
+            del page_images
+
         except Exception as e:
             print(f"Error processing page {page_num}: {e}")
             pdf_results["pages"].append({
                 "page_number": page_num,
                 "error": str(e)
             })
+        
+        # Force garbage collection after every page
+        gc.collect() 
 
     return pdf_results
 
