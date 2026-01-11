@@ -96,12 +96,13 @@ which pdfinfo
    python3 scripts/run_pipeline.py
    ```
 
-   This executes five steps in sequence:
-   1. `process_pdfs.py` - OCR extraction with bounding boxes
-   2. `segment_articles.py` - Article segmentation and layout detection
-   3. `tag_articles.py` - Automated content classification
-   4. `generate_timeline.py` - Timeline data generation
-   5. `analyze_text.py` - Word frequency and sentiment analysis
+   This executes six steps in sequence:
+   1. `preprocess.py` - Resize PDFs, detect vertical columns, split into manageable images (~4MB/page)
+   2. `process_pdfs.py` - OCR extraction on preprocessed column images
+   3. `segment_articles.py` - Article segmentation and layout detection
+   4. `tag_articles.py` - Automated content classification
+   5. `generate_timeline.py` - Timeline data generation
+   6. `analyze_text.py` - Word frequency and sentiment analysis
 
 3. **Output:**
    Generated files in `data/processed/`:
