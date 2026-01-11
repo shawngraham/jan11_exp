@@ -4,6 +4,10 @@
 
 **Live Site:** [Coming Soon - GitHub Pages URL]
 
+## What you're looking at
+
+My kid and I were listening to a podcast about Jack the Ripper. We started talking, and I mentioned how newspapers would reprint stories from each other. This led to us developing an interesting question: did our local newspaper print anything about the Whitechapel murders, and if so, what would that have meant to the people of this community? I filed the thoughts away for future reference, but then later saw some posts about Anastasia Salter's session at the MLA on agentic coding for the humanities (January 2026). I looked up her course materials, and thought I would follow along with them, using their guidance for prompting Claude Code with our initial question. The result is this repository.
+
 ---
 
 ## Project Overview
