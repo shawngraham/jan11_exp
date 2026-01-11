@@ -61,20 +61,14 @@ def process_pdf(pdf_path, output_dir):
     print(f"Processing {pdf_name}...")
 
     # Convert PDF to images
-    # Using 300 DPI for optimal OCR quality on newspaper scans
-    # PIL limit has been increased to 500 MP to handle large images
+    # Using 150 DPI to balance quality with memory constraints
+    # Higher DPI causes memory exhaustion (SIGKILL) during OCR processing
+    # 150 DPI is sufficient for newspaper OCR and prevents memory issues
     try:
-        images = convert_from_path(pdf_path, dpi=300)
+        images = convert_from_path(pdf_path, dpi=150)
     except Exception as e:
-        # If still fails, try lower DPI
-        print(f"Error at 300 DPI: {e}")
-        print(f"Retrying {pdf_name} at 200 DPI...")
-        try:
-            images = convert_from_path(pdf_path, dpi=200)
-            print(f"Success at 200 DPI")
-        except Exception as e2:
-            print(f"Error converting PDF {pdf_name}: {e2}")
-            return None
+        print(f"Error converting PDF {pdf_name}: {e}")
+        return None
 
     pdf_results = {
         "filename": pdf_name,
@@ -94,10 +88,10 @@ def process_pdf(pdf_path, output_dir):
         # Convert PIL image to numpy array for PaddleOCR
         img_array = np.array(image)
 
-        # Run OCR
-        # Note: cls parameter removed - text orientation is configured at OCR initialization
+        # Run OCR using predict() method (ocr() is deprecated)
+        # Text orientation is configured at OCR initialization
         try:
-            result = ocr.ocr(img_array)
+            result = ocr.predict(img_array)
 
             # Extract text blocks with bounding boxes
             text_blocks = []
