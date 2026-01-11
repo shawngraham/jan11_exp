@@ -75,15 +75,16 @@ brew install poppler
 which pdfinfo
 ```
 
-**Note:** PaddleOCR runs on CPU mode on Apple Silicon. GPU acceleration is not required.
+**Note:** EasyOCR runs in CPU mode on Apple Silicon. GPU acceleration is not required.
 
 ### Required Dependencies
 
-- **PaddleOCR**: Advanced OCR for newspaper digitization
+- **EasyOCR**: Lightweight OCR engine for text extraction
 - **pdf2image**: PDF to image conversion
-- **OpenCV**: Image processing
+- **OpenCV**: Image processing and column detection
 - **PIL/Pillow**: Image manipulation
 - **NumPy**: Numerical operations
+- **PyTorch**: Deep learning backend for EasyOCR
 
 ### Running the Pipeline
 
@@ -97,12 +98,34 @@ which pdfinfo
    ```
 
    This executes six steps in sequence:
-   1. `preprocess.py` - Resize PDFs, detect vertical columns, split into manageable images (~4MB/page)
-   2. `process_pdfs.py` - OCR extraction on preprocessed column images
-   3. `segment_articles.py` - Article segmentation and layout detection
-   4. `tag_articles.py` - Automated content classification
-   5. `generate_timeline.py` - Timeline data generation
-   6. `analyze_text.py` - Word frequency and sentiment analysis
+
+   **Stage 1: Preprocessing (`preprocess.py`)**
+   - Converts PDFs to images at optimal DPI (auto-calculated, ~100-150 DPI)
+   - Detects vertical column boundaries using OpenCV line detection
+   - Splits pages into 5 columns, saves as separate PNG images
+   - Outputs: `data/preprocessed/{pdf_name}/` with column images and metadata
+
+   **Stage 2: OCR (`process_pdfs.py`)**
+   - Reads preprocessed column images from Stage 1
+   - Runs EasyOCR on each column independently
+   - Adjusts bounding boxes back to full-page coordinates
+   - Outputs: `data/raw/ocr_output.json` with all text blocks
+
+   **Stage 3: Segmentation (`segment_articles.py`)**
+   - Groups text blocks into articles based on proximity and layout
+   - Outputs: `data/processed/articles.json`
+
+   **Stage 4: Tagging (`tag_articles.py`)**
+   - Auto-tags articles (Whitechapel, crime, British Empire, etc.)
+   - Outputs: `data/processed/tagged_articles.json`
+
+   **Stage 5: Timeline (`generate_timeline.py`)**
+   - Creates dual timeline (London murders vs Shawville publications)
+   - Outputs: `data/processed/timeline.json`
+
+   **Stage 6: Analysis (`analyze_text.py`)**
+   - Word frequency and sensational language analysis
+   - Outputs: `data/processed/text_analysis.json`
 
 3. **Output:**
    Generated files in `data/processed/`:

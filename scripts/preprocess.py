@@ -217,7 +217,7 @@ def preprocess_pdf(pdf_path, output_dir, dpi=None):
 
 def main():
     parser = argparse.ArgumentParser(description='Preprocess PDFs for OCR')
-    parser.add_argument('--input-dir', default='data/pdfs',
+    parser.add_argument('--input-dir', default='pdfs',
                         help='Directory containing PDFs')
     parser.add_argument('--output-dir', default='data/preprocessed',
                         help='Directory for preprocessed column images')
