@@ -56,11 +56,21 @@ def process_pdf(pdf_path, output_dir):
     print(f"Processing {pdf_name}...")
 
     # Convert PDF to images
+    # Using 200 DPI - good balance between quality and file size
+    # Higher DPI (300+) can trigger PIL's decompression bomb protection
+    # 200 DPI is sufficient for newspaper OCR
     try:
-        images = convert_from_path(pdf_path, dpi=300)
+        images = convert_from_path(pdf_path, dpi=200)
     except Exception as e:
-        print(f"Error converting PDF {pdf_name}: {e}")
-        return None
+        # If still fails, try lower DPI
+        print(f"Error at 200 DPI: {e}")
+        print(f"Retrying {pdf_name} at 150 DPI...")
+        try:
+            images = convert_from_path(pdf_path, dpi=150)
+            print(f"Success at 150 DPI")
+        except Exception as e2:
+            print(f"Error converting PDF {pdf_name}: {e2}")
+            return None
 
     pdf_results = {
         "filename": pdf_name,
