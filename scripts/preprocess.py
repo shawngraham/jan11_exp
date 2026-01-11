@@ -53,63 +53,147 @@ def calculate_optimal_dpi(pdf_path, target_mb=4):
         return 100
 
 
-def detect_column_boundaries(image_array, expected_columns=5):
+def smooth_projection(projection, window_size=15):
     """
-    Detect vertical column boundaries using line detection.
-    Returns list of x-coordinates for column boundaries.
+    Smooth projection profile using moving average.
+    Reduces noise while preserving valley/peak structure.
+    """
+    kernel = np.ones(window_size) / window_size
+    return np.convolve(projection, kernel, mode='same')
+
+
+def find_valleys(projection, expected_columns=5, min_valley_depth=0.1):
+    """
+    Find valleys in projection profile that represent column gaps.
+
+    Args:
+        projection: 1D array of vertical projection values
+        expected_columns: Expected number of columns
+        min_valley_depth: Minimum depth of valley relative to peak (0-1)
+
+    Returns:
+        List of x-coordinates for valley centers (column boundaries)
+    """
+    # Invert projection so valleys become peaks
+    inverted = -projection
+
+    # Normalize to 0-1 range
+    if inverted.max() > inverted.min():
+        inverted = (inverted - inverted.min()) / (inverted.max() - inverted.min())
+
+    # Find local maxima in inverted projection (= valleys in original)
+    valleys = []
+
+    # Simple peak detection: find points higher than neighbors
+    for i in range(1, len(inverted) - 1):
+        if inverted[i] > inverted[i-1] and inverted[i] > inverted[i+1]:
+            # Check if valley is deep enough
+            if inverted[i] > min_valley_depth:
+                valleys.append(i)
+
+    # If we found reasonable number of valleys, return them
+    # We expect (expected_columns - 1) gaps between columns
+    expected_gaps = expected_columns - 1
+
+    if len(valleys) >= expected_gaps - 1:  # Allow 1 missing
+        # Sort by depth and take the deepest ones
+        valley_depths = [(v, inverted[v]) for v in valleys]
+        valley_depths.sort(key=lambda x: x[1], reverse=True)
+
+        # Take top expected_gaps valleys
+        top_valleys = [v[0] for v in valley_depths[:expected_gaps]]
+        top_valleys.sort()
+
+        return top_valleys
+
+    return None
+
+
+def detect_column_boundaries(image_array, expected_columns=5, debug=False, debug_path=None):
+    """
+    Detect vertical column boundaries using projection profile method.
+
+    This method:
+    1. Binarizes the image
+    2. Creates vertical projection profile (sum of dark pixels per column)
+    3. Smooths the profile to reduce noise
+    4. Finds valleys (column gaps) in the profile
+
+    Args:
+        image_array: Input image (BGR or grayscale)
+        expected_columns: Expected number of columns
+        debug: If True, save visualization
+        debug_path: Path to save debug image
+
+    Returns:
+        List of x-coordinates for column boundaries [0, x1, x2, ..., width]
     """
     height, width = image_array.shape[:2]
-    gray = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
 
-    # Edge detection
-    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+    # Convert to grayscale if needed
+    if len(image_array.shape) == 3:
+        gray = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = image_array
 
-    # Detect lines using Hough transform
-    lines = cv2.HoughLinesP(
-        edges,
-        rho=1,
-        theta=np.pi/180,
-        threshold=int(height * 0.3),
-        minLineLength=int(height * 0.5),
-        maxLineGap=int(height * 0.1)
-    )
+    # Binarize using Otsu's method
+    # This makes text/lines black (0) and background white (255)
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-    if lines is None:
-        print(f"    No vertical lines detected, using even division")
-        return [int(width * i / expected_columns) for i in range(expected_columns + 1)]
+    # Create vertical projection profile
+    # Sum each column - higher values = more dark pixels (text/lines)
+    projection = np.sum(binary, axis=0)
 
-    # Extract vertical lines (near 90 degrees)
-    vertical_lines = []
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
+    # Smooth to reduce noise
+    smoothed = smooth_projection(projection, window_size=int(width / 100))
 
-        # Check if line is mostly vertical
-        if abs(x2 - x1) < 20:  # Allow small horizontal deviation
-            x_avg = (x1 + x2) / 2
-            vertical_lines.append(x_avg)
+    # Find valleys (column gaps)
+    valleys = find_valleys(smoothed, expected_columns=expected_columns)
 
-    if len(vertical_lines) < 2:
-        print(f"    Insufficient vertical lines detected ({len(vertical_lines)}), using even division")
-        return [int(width * i / expected_columns) for i in range(expected_columns + 1)]
+    # Debug visualization
+    if debug and debug_path:
+        import matplotlib
+        matplotlib.use('Agg')  # Non-interactive backend
+        import matplotlib.pyplot as plt
 
-    # Cluster lines that are close together (within 20 pixels)
-    vertical_lines.sort()
-    clustered = []
-    current_cluster = [vertical_lines[0]]
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 8))
 
-    for x in vertical_lines[1:]:
-        if x - current_cluster[-1] < 20:
-            current_cluster.append(x)
-        else:
-            clustered.append(sum(current_cluster) / len(current_cluster))
-            current_cluster = [x]
-    clustered.append(sum(current_cluster) / len(current_cluster))
+        # Plot projection profile
+        ax1.plot(projection, label='Raw projection', alpha=0.3)
+        ax1.plot(smoothed, label='Smoothed projection', linewidth=2)
+        if valleys:
+            ax1.scatter(valleys, smoothed[valleys], color='red', s=100,
+                       zorder=5, label='Detected gaps')
+        ax1.set_xlabel('X Position (pixels)')
+        ax1.set_ylabel('Darkness (sum of pixels)')
+        ax1.set_title('Vertical Projection Profile')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
 
-    # Ensure we have boundaries at 0 and width
-    boundaries = [0] + [int(x) for x in clustered if 0 < x < width] + [width]
-    boundaries = sorted(list(set(boundaries)))
+        # Show image with detected boundaries
+        display_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        if valleys:
+            for v in valleys:
+                cv2.line(display_img, (v, 0), (v, height), (0, 0, 255), 2)
+        ax2.imshow(cv2.cvtColor(display_img, cv2.COLOR_BGR2RGB))
+        ax2.set_title('Detected Column Boundaries')
+        ax2.axis('off')
 
-    print(f"    Detected {len(boundaries)-1} columns from {len(vertical_lines)} vertical lines")
+        plt.tight_layout()
+        plt.savefig(debug_path, dpi=150, bbox_inches='tight')
+        plt.close()
+        print(f"      Debug visualization saved to {debug_path}")
+
+    # Convert valleys to boundaries
+    if valleys and len(valleys) >= expected_columns - 2:  # Allow some tolerance
+        boundaries = [0] + valleys + [width]
+        boundaries = sorted(list(set(boundaries)))
+        print(f"    Detected {len(boundaries)-1} columns using projection profile")
+        return boundaries
+
+    # Fallback: divide evenly
+    print(f"    Could not detect columns reliably, using even division")
+    boundaries = [int(width * i / expected_columns) for i in range(expected_columns + 1)]
     return boundaries
 
 
@@ -142,7 +226,7 @@ def split_into_columns(image_array, boundaries, margin=10):
     return columns
 
 
-def preprocess_pdf(pdf_path, output_dir, dpi=None):
+def preprocess_pdf(pdf_path, output_dir, dpi=None, debug=False):
     """
     Preprocess a single PDF: convert to images, detect columns, split and save.
     """
@@ -162,6 +246,11 @@ def preprocess_pdf(pdf_path, output_dir, dpi=None):
     pdf_output_dir = Path(output_dir) / pdf_name
     pdf_output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Create debug directory if needed
+    if debug:
+        debug_dir = pdf_output_dir / 'debug'
+        debug_dir.mkdir(exist_ok=True)
+
     # Store metadata for all pages
     pdf_metadata = {
         'source_pdf': pdf_name,
@@ -177,8 +266,17 @@ def preprocess_pdf(pdf_path, output_dir, dpi=None):
         # Convert PIL to numpy array
         image_array = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
-        # Detect columns
-        boundaries = detect_column_boundaries(image_array)
+        # Detect columns with optional debug visualization
+        debug_path = None
+        if debug:
+            debug_path = pdf_output_dir / 'debug' / f'page_{page_num:03d}_detection.png'
+
+        boundaries = detect_column_boundaries(
+            image_array,
+            expected_columns=5,
+            debug=debug,
+            debug_path=debug_path
+        )
 
         # Split into columns
         columns = split_into_columns(image_array, boundaries)
@@ -223,6 +321,8 @@ def main():
                         help='Directory for preprocessed column images')
     parser.add_argument('--dpi', type=int, default=None,
                         help='DPI for conversion (auto-calculated if not specified)')
+    parser.add_argument('--debug', action='store_true',
+                        help='Save debug visualizations showing column detection')
     args = parser.parse_args()
 
     input_dir = Path(args.input_dir)
@@ -237,12 +337,14 @@ def main():
         return
 
     print(f"Found {len(pdf_files)} PDFs to preprocess")
+    if args.debug:
+        print("Debug mode enabled - will save column detection visualizations")
 
     # Process each PDF
     all_metadata = []
     for pdf_path in pdf_files:
         try:
-            metadata = preprocess_pdf(pdf_path, output_dir, args.dpi)
+            metadata = preprocess_pdf(pdf_path, output_dir, args.dpi, debug=args.debug)
             all_metadata.append(metadata)
         except Exception as e:
             print(f"  ✗ Error processing {pdf_path.name}: {e}")
