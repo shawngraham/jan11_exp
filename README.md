@@ -53,6 +53,20 @@ cd scripts
 pip install -r requirements.txt
 ```
 
+**For Apple Silicon (M1/M2/M3) Macs:**
+
+The pipeline is fully compatible with Apple Silicon. You'll need to install poppler for PDF processing:
+
+```bash
+# Install poppler via Homebrew
+brew install poppler
+
+# Verify installation
+which pdfinfo
+```
+
+**Note:** PaddleOCR runs on CPU mode on Apple Silicon. GPU acceleration is not required.
+
 ### Required Dependencies
 
 - **PaddleOCR**: Advanced OCR for newspaper digitization
