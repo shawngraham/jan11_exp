@@ -12,6 +12,11 @@ from pdf2image import convert_from_path
 from paddleocr import PaddleOCR
 import numpy as np
 import paddleocr
+from PIL import Image
+
+# Increase PIL's decompression bomb limit for large newspaper scans
+# Default is ~178 MP, we're increasing to 500 MP to handle high-res PDFs
+Image.MAX_IMAGE_PIXELS = 500000000
 
 # Initialize PaddleOCR with version-specific parameters
 # PaddleOCR 2.x uses: use_angle_cls=True
@@ -56,18 +61,17 @@ def process_pdf(pdf_path, output_dir):
     print(f"Processing {pdf_name}...")
 
     # Convert PDF to images
-    # Using 200 DPI - good balance between quality and file size
-    # Higher DPI (300+) can trigger PIL's decompression bomb protection
-    # 200 DPI is sufficient for newspaper OCR
+    # Using 300 DPI for optimal OCR quality on newspaper scans
+    # PIL limit has been increased to 500 MP to handle large images
     try:
-        images = convert_from_path(pdf_path, dpi=200)
+        images = convert_from_path(pdf_path, dpi=300)
     except Exception as e:
         # If still fails, try lower DPI
-        print(f"Error at 200 DPI: {e}")
-        print(f"Retrying {pdf_name} at 150 DPI...")
+        print(f"Error at 300 DPI: {e}")
+        print(f"Retrying {pdf_name} at 200 DPI...")
         try:
-            images = convert_from_path(pdf_path, dpi=150)
-            print(f"Success at 150 DPI")
+            images = convert_from_path(pdf_path, dpi=200)
+            print(f"Success at 200 DPI")
         except Exception as e2:
             print(f"Error converting PDF {pdf_name}: {e2}")
             return None
@@ -91,8 +95,9 @@ def process_pdf(pdf_path, output_dir):
         img_array = np.array(image)
 
         # Run OCR
+        # Note: cls parameter removed - text orientation is configured at OCR initialization
         try:
-            result = ocr.ocr(img_array, cls=True)
+            result = ocr.ocr(img_array)
 
             # Extract text blocks with bounding boxes
             text_blocks = []
