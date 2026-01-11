@@ -106,7 +106,7 @@ def process_pdf(pdf_path, output_dir):
 def main():
     # Setup paths
     base_dir = Path(__file__).parent.parent
-    pdf_dir = base_dir / "pdf"
+    pdf_dir = base_dir / "pdfs"
     output_dir = base_dir / "data" / "raw"
     images_dir = output_dir / "images"
 
@@ -117,7 +117,7 @@ def main():
     # Check if PDF directory exists
     if not pdf_dir.exists():
         print(f"Error: PDF directory not found at {pdf_dir}")
-        print("Please create the 'pdf' folder and add your PDF files.")
+        print("Please create the 'pdfs' folder and add your PDF files.")
         sys.exit(1)
 
     # Find all PDFs
