@@ -1,5 +1,6 @@
 paddleocr>=2.7.0
 paddlepaddle>=2.6.2
+paddlex[ocr]>=3.0.0
 pdf2image>=1.16.0
 opencv-python>=4.8.0
 Pillow>=10.0.0
