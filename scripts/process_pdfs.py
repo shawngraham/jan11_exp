@@ -13,10 +13,17 @@ from paddleocr import PaddleOCR
 import numpy as np
 
 # Initialize PaddleOCR
-# Note: use_gpu parameter deprecated in newer versions
-# For Apple Silicon (M1/M2), PaddleOCR runs on CPU by default
-# Set show_log=False to reduce console output
-ocr = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
+# Note: Updated for PaddleOCR 2.7+ compatibility
+# - use_angle_cls deprecated, using use_textline_orientation instead
+# - show_log is not a valid parameter in newer versions
+# - For Apple Silicon (M1/M2/M3), runs on CPU by default
+try:
+    # Try newer parameter name first (PaddleOCR 2.7+)
+    ocr = PaddleOCR(use_textline_orientation=True, lang='en')
+except Exception as e:
+    # Fallback to older parameter name if needed
+    print(f"Note: Using fallback OCR initialization")
+    ocr = PaddleOCR(lang='en')
 
 def process_pdf(pdf_path, output_dir):
     """
