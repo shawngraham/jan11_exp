@@ -101,14 +101,15 @@ which pdfinfo
 
    **Stage 1: Preprocessing (`preprocess.py`)**
    - Converts PDFs to images at optimal DPI (auto-calculated, ~100-150 DPI)
-   - Detects vertical column boundaries using **projection profile method**:
+   - Detects vertical column boundaries using **morphological line detection**:
      * Binarizes the image (Otsu's thresholding)
-     * Creates vertical projection (sums dark pixels per column)
-     * Smooths the profile to reduce noise
-     * Finds valleys (gaps) representing column boundaries
+     * Uses morphological operations to enhance vertical lines only
+     * Creates projection profile from isolated vertical structures
+     * Finds peaks (black divider lines) in the profile
+     * Handles tight columns and spanning mastheads
    - Splits pages into 5 columns, saves as separate PNG images
    - Outputs: `data/preprocessed/{pdf_name}/` with column images and metadata
-   - **Debug mode:** Use `--debug` flag to save visualization graphs
+   - **Debug mode:** Use `--debug` flag to save 4-panel visualization
 
    **Stage 2: OCR (`process_pdfs.py`)**
    - Reads preprocessed column images from Stage 1
@@ -147,16 +148,21 @@ If column boundaries are not detected correctly, use debug mode:
 python3 scripts/preprocess.py --debug
 ```
 
-This will save visualization images to `data/preprocessed/{pdf_name}/debug/`:
-- **Top graph:** Projection profile showing darkness across page width
-  - Peaks = text-heavy areas
-  - Valleys (red dots) = column gaps
-- **Bottom image:** Original page with detected boundaries (red lines)
+This will save 4-panel visualization images to `data/preprocessed/{pdf_name}/debug/`:
+- **Top-left:** Original grayscale image
+- **Top-right:** Enhanced vertical lines (morphological filtering)
+  - Shows only vertical structures (column dividers)
+  - Text and horizontal lines removed
+- **Bottom-left:** Projection profile graph
+  - Peaks (red dots) = detected black divider lines
+  - Shows how prominent each vertical line is
+- **Bottom-right:** Original with detected dividers (red lines)
 
 **Common issues:**
 - **Too many/few columns detected:** Adjust `expected_columns` parameter in `preprocess.py`
-- **Boundaries in wrong places:** Check if PDFs have unusual layout (ads, illustrations spanning columns)
-- **No boundaries detected:** Falls back to even division - check debug graphs to see why valleys weren't found
+- **Dividers too faint:** Lines may be broken/faded - check "Enhanced vertical lines" panel
+- **Wrong lines detected:** Adjust `min_peak_height` parameter (currently 0.2) or `vertical_kernel_height`
+- **No boundaries detected:** Falls back to even division - check if divider lines are visible in enhanced image
 
 ---
 
