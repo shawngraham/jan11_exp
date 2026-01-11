@@ -10,6 +10,12 @@ My kid and I were listening to a podcast about Jack the Ripper. We started talki
 
 ---
 
+## Project Origin
+
+My kid and I were listening to a podcast about Jack the Ripper. We started talking, and I mentioned how newspapers would reprint stories from each other. This led to an interesting question: did our local newspaper print anything about the Whitechapel murders, and if so, what would that have meant to the people of _this_ community? I filed it away for future reference, but then later saw some posts about Anastasia Salter's session at the MLA on agentic coding for the humanities. I looked up her course materials, and thought I would follow along with them, using their guidance for prompting Claude Code with our initial question. The result is this repository.
+
+---
+
 ## Project Overview
 
 This project explores a compelling question: **What does Jack the Ripper mean to Shawville?**
