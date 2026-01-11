@@ -63,8 +63,8 @@ pip install -r requirements.txt
 
 ### Running the Pipeline
 
-1. **Add PDFs to the `pdf/` folder**
-   - Place your newspaper PDF files in the `pdf/` directory
+1. **Add PDFs to the `pdfs/` folder**
+   - Place your newspaper PDF files in the `pdfs/` directory
    - The pipeline expects PDFs from BAnQ or similar archives
 
 2. **Run the full pipeline:**
@@ -116,7 +116,7 @@ pip install -r requirements.txt
 ├── data/
 │   ├── raw/                   # OCR output
 │   └── processed/             # Structured data files
-├── pdf/                       # Source PDFs (add here)
+├── pdfs/                      # Source PDFs (add here)
 └── assets/
     └── images/                # Images and textures
 ```
@@ -153,7 +153,7 @@ pip install -r requirements.txt
    cd jan11_exp
    ```
 
-2. **Add PDFs to `pdf/` folder**
+2. **Add PDFs to `pdfs/` folder**
 
 3. **Run data pipeline:**
    ```bash
