@@ -33,7 +33,6 @@ if major_version >= 3:
         # Try newspaper-specific layout model first
         ocr = PPStructureV3(
             layout_model='picodet_lcnet_x1_0_layout_newspaper',
-            show_log=False,
             lang='en'
         )
         print("✓ Loaded newspaper layout model")
@@ -41,7 +40,6 @@ if major_version >= 3:
         print(f"Note: Newspaper model not available, using default layout model")
         print(f"  Error: {e}")
         ocr = PPStructureV3(
-            show_log=False,
             lang='en'
         )
     USE_STRUCTURE = True
