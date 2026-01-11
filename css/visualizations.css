@@ -1,0 +1,406 @@
+/* ==================================
+   DATA VISUALIZATIONS
+   Charts, word clouds, and analysis displays
+   ================================== */
+
+/* ==================================
+   Text Analysis
+   ================================== */
+.analysis-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.word-cloud-wrapper {
+    background: var(--color-paper-light);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-paper-dark);
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#word-cloud {
+    width: 100%;
+    height: 500px;
+}
+
+.sensational-words {
+    background: var(--color-paper-light);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-paper-dark);
+}
+
+.sensational-words h3 {
+    font-size: 1.3rem;
+    margin-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-ripper);
+    padding-bottom: var(--spacing-xs);
+}
+
+#sensational-list {
+    list-style: none;
+}
+
+.sensational-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px solid var(--color-paper-dark);
+}
+
+.sensational-word {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-ripper);
+}
+
+.sensational-count {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-ink-faded);
+}
+
+/* ==================================
+   Charts
+   ================================== */
+#frequency-chart,
+#article-breakdown {
+    width: 100%;
+    height: 350px;
+}
+
+.chart-svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Axis styling */
+.axis line,
+.axis path {
+    stroke: var(--color-ink-faded);
+    stroke-width: 1px;
+}
+
+.axis text {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    fill: var(--color-ink);
+}
+
+.axis-label {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    fill: var(--color-ink-faded);
+    font-style: italic;
+}
+
+/* Bar chart */
+.bar {
+    fill: var(--color-shawville);
+    transition: all 0.3s ease;
+}
+
+.bar:hover {
+    fill: var(--color-ripper);
+}
+
+.bar.whitechapel {
+    fill: var(--color-ripper);
+}
+
+/* Line chart */
+.line {
+    fill: none;
+    stroke: var(--color-ripper);
+    stroke-width: 2px;
+}
+
+.dot {
+    fill: var(--color-ripper);
+    stroke: var(--color-ink);
+    stroke-width: 1px;
+    transition: all 0.3s ease;
+}
+
+.dot:hover {
+    r: 6;
+    stroke-width: 2px;
+}
+
+/* Pie/Donut chart */
+.arc path {
+    stroke: var(--color-paper);
+    stroke-width: 2px;
+    transition: all 0.3s ease;
+}
+
+.arc:hover path {
+    opacity: 0.8;
+    stroke-width: 3px;
+}
+
+.arc text {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    fill: var(--color-ink);
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+/* Chart tooltip */
+.chart-tooltip {
+    position: absolute;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.chart-tooltip.visible {
+    opacity: 1;
+}
+
+/* ==================================
+   Empire Visualization
+   ================================== */
+.empire-visualization {
+    background: var(--color-paper-light);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-paper-dark);
+    margin: var(--spacing-lg) 0;
+    min-height: 400px;
+}
+
+#empire-viz {
+    width: 100%;
+}
+
+.empire-node {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.empire-node circle {
+    stroke: var(--color-ink);
+    stroke-width: 2px;
+    transition: all 0.3s ease;
+}
+
+.empire-node text {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    fill: var(--color-ink);
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.empire-node:hover circle {
+    stroke-width: 3px;
+}
+
+.empire-node.whitechapel circle {
+    fill: var(--color-ripper);
+    filter: drop-shadow(0 0 6px rgba(139, 0, 0, 0.5));
+}
+
+.empire-node.british circle {
+    fill: #191970;
+}
+
+.empire-node.canadian circle {
+    fill: #dc143c;
+}
+
+.empire-node.local circle {
+    fill: #228b22;
+}
+
+.empire-link {
+    stroke: var(--color-ink-light);
+    stroke-opacity: 0.3;
+    stroke-width: 1px;
+}
+
+/* ==================================
+   Article Browser/Archive
+   ================================== */
+.archive-controls {
+    margin-bottom: var(--spacing-lg);
+}
+
+.search-box {
+    width: 100%;
+    max-width: 600px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    border: 2px solid var(--color-paper-dark);
+    background: var(--color-paper-light);
+    color: var(--color-ink);
+    margin-bottom: var(--spacing-md);
+}
+
+.search-box:focus {
+    outline: none;
+    border-color: var(--color-ripper);
+}
+
+.filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.filter-tag {
+    padding: 0.5rem 1rem;
+    background: var(--color-paper-dark);
+    border: 1px solid var(--color-ink-light);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.filter-tag:hover {
+    background: var(--color-ink-light);
+    color: var(--color-paper);
+}
+
+.filter-tag.active {
+    background: var(--color-ripper);
+    color: var(--color-paper);
+    border-color: var(--color-ripper);
+}
+
+/* Article Grid */
+.article-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.article-card {
+    background: var(--color-paper-light);
+    border: 1px solid var(--color-paper-dark);
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.article-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: var(--color-ripper);
+}
+
+.article-card.whitechapel {
+    border-left: 4px solid var(--color-ripper);
+}
+
+.article-card-headline {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-ink);
+}
+
+.article-card.whitechapel .article-card-headline {
+    color: var(--color-ripper);
+}
+
+.article-card-meta {
+    font-size: 0.8rem;
+    color: var(--color-ink-light);
+    margin-bottom: var(--spacing-sm);
+}
+
+.article-card-excerpt {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-ink-faded);
+    margin-bottom: var(--spacing-sm);
+}
+
+.article-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.article-card-tag {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--color-paper-dark);
+    color: var(--color-ink-light);
+    border-radius: 3px;
+}
+
+/* Loading and empty states */
+.loading-state,
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-ink-faded);
+    font-style: italic;
+}
+
+.loading-state::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: var(--spacing-md) auto 0;
+    border: 3px solid var(--color-paper-dark);
+    border-top-color: var(--color-ripper);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ==================================
+   Responsive
+   ================================== */
+@media (max-width: 1024px) {
+    .analysis-container {
+        grid-template-columns: 1fr;
+    }
+
+    .word-cloud-wrapper {
+        min-height: 400px;
+    }
+
+    #word-cloud {
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .article-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #frequency-chart,
+    #article-breakdown {
+        height: 300px;
+    }
+
+    .search-box {
+        max-width: 100%;
+    }
+}

@@ -1,0 +1,260 @@
+/* ==================================
+   NEWSPAPER PAGE VIEWER
+   "Motes of Space-Time" visualization
+   ================================== */
+
+.newspaper-viewer {
+    background: var(--color-paper-dark);
+    padding: var(--spacing-lg) 0;
+}
+
+.newspaper-page {
+    max-width: 1000px;
+    margin: 0 auto var(--spacing-xl);
+    background: var(--color-paper-light);
+    border: 2px solid var(--color-ink-faded);
+    box-shadow:
+        4px 4px 8px rgba(0, 0, 0, 0.2),
+        8px 8px 16px rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding: var(--spacing-md);
+}
+
+.newspaper-page-header {
+    text-align: center;
+    border-bottom: 3px double var(--color-ink);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.newspaper-page-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.25rem;
+}
+
+.newspaper-page-date {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-ink-faded);
+}
+
+/* SVG Container for Article Layout */
+.newspaper-page-content {
+    position: relative;
+    width: 100%;
+    min-height: 600px;
+}
+
+.newspaper-svg {
+    width: 100%;
+    display: block;
+}
+
+/* Article Blocks */
+.article-block {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.article-block rect {
+    fill: var(--color-paper);
+    stroke: var(--color-ink-light);
+    stroke-width: 1px;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.article-block text {
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    fill: var(--color-ink);
+    pointer-events: none;
+}
+
+.article-block:hover rect {
+    opacity: 0.9;
+    stroke-width: 2px;
+}
+
+/* Whitechapel Articles - The "Motes of Space-Time" */
+.article-block.whitechapel rect {
+    fill: var(--color-ripper-light);
+    stroke: var(--color-ripper);
+    stroke-width: 2px;
+    opacity: 0.3;
+    filter: drop-shadow(0 0 8px rgba(139, 0, 0, 0.4));
+    animation: ripperGlow 3s ease-in-out infinite;
+}
+
+.article-block.whitechapel:hover rect {
+    opacity: 0.5;
+    filter: drop-shadow(0 0 12px rgba(139, 0, 0, 0.8));
+}
+
+.article-block.whitechapel text {
+    fill: var(--color-ripper);
+    font-weight: 600;
+}
+
+@keyframes ripperGlow {
+    0%, 100% {
+        opacity: 0.3;
+        filter: drop-shadow(0 0 8px rgba(139, 0, 0, 0.4));
+    }
+    50% {
+        opacity: 0.4;
+        filter: drop-shadow(0 0 12px rgba(139, 0, 0, 0.6));
+    }
+}
+
+/* Article Type Styling */
+.article-block.crime_general rect {
+    fill: #8b4513;
+    opacity: 0.2;
+}
+
+.article-block.british_empire rect {
+    fill: #191970;
+    opacity: 0.2;
+}
+
+.article-block.local_shawville rect {
+    fill: #228b22;
+    opacity: 0.2;
+}
+
+.article-block.advertisement rect {
+    fill: #808080;
+    opacity: 0.15;
+}
+
+/* Page Number */
+.page-number {
+    position: absolute;
+    bottom: var(--spacing-sm);
+    right: var(--spacing-md);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-ink-light);
+}
+
+/* Article Modal Content */
+#modal-body .article-full {
+    font-family: var(--font-body);
+}
+
+#modal-body .article-headline {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--color-ripper);
+    padding-bottom: var(--spacing-xs);
+}
+
+#modal-body .article-meta {
+    font-size: 0.9rem;
+    color: var(--color-ink-light);
+    margin-bottom: var(--spacing-md);
+    font-style: italic;
+}
+
+#modal-body .article-text {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    text-align: justify;
+    hyphens: auto;
+}
+
+#modal-body .article-tags {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-paper-dark);
+}
+
+#modal-body .tag {
+    display: inline-block;
+    background: var(--color-paper-dark);
+    padding: 0.25rem 0.75rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    color: var(--color-ink-faded);
+}
+
+#modal-body .tag.whitechapel_ripper {
+    background: var(--color-ripper);
+    color: var(--color-paper);
+}
+
+/* Newspaper texture overlay */
+.newspaper-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 1px,
+            rgba(0, 0, 0, 0.02) 1px,
+            rgba(0, 0, 0, 0.02) 2px
+        );
+    pointer-events: none;
+}
+
+/* Loading state */
+.newspaper-viewer.loading {
+    min-height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.newspaper-viewer.loading::after {
+    content: 'Loading newspaper pages...';
+    font-family: var(--font-mono);
+    color: var(--color-ink-faded);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .newspaper-page {
+        margin: 0 var(--spacing-sm) var(--spacing-lg);
+        padding: var(--spacing-sm);
+    }
+
+    .newspaper-page-title {
+        font-size: 1.5rem;
+    }
+
+    .article-block text {
+        font-size: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .newspaper-page-title {
+        font-size: 1.2rem;
+        letter-spacing: 0.05em;
+    }
+
+    .article-block text {
+        display: none; /* Hide text labels on very small screens */
+    }
+}
