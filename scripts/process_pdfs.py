@@ -13,7 +13,10 @@ from paddleocr import PaddleOCR
 import numpy as np
 
 # Initialize PaddleOCR
-ocr = PaddleOCR(use_angle_cls=True, lang='en', use_gpu=False)
+# Note: use_gpu parameter deprecated in newer versions
+# For Apple Silicon (M1/M2), PaddleOCR runs on CPU by default
+# Set show_log=False to reduce console output
+ocr = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
 
 def process_pdf(pdf_path, output_dir):
     """
