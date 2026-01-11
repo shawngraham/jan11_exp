@@ -190,28 +190,21 @@ def process_standard_result(result):
 
 def process_pdf(pdf_path, output_dir):
     """
-    Process a single PDF file page-by-page to minimize memory usage.
-
-    Args:
-        pdf_path: Path to PDF file
-        output_dir: Directory to save processed images
-
-    Returns:
-        Dictionary with OCR results for all pages
+    M1 Silicon Optimized PDF Processor
     """
     pdf_name = Path(pdf_path).stem
     print(f"Processing {pdf_name}...")
 
-    # Get page count without loading the actual images into RAM
+    # 1. Get page count without loading images (Saves RAM)
     try:
         info = pdfinfo_from_path(pdf_path)
         num_pages = info["Pages"]
-        print(f"  Found {num_pages} pages")
     except Exception as e:
-        print(f"Error reading PDF info for {pdf_name}: {e}")
+        print(f"Poppler error: {e}. Try 'brew install poppler'")
         return None
 
-    # Determine DPI based on engine
+    # 150 DPI is the 'sweet spot' for newspapers on M1 (16GB RAM)
+    # If you have an 8GB Mac Mini, consider dropping this to 130
     dpi = 150 if USE_STRUCTURE else 130
 
     pdf_results = {
@@ -221,46 +214,40 @@ def process_pdf(pdf_path, output_dir):
         "pages": []
     }
 
-    # Process each page individually
     for page_num in range(1, num_pages + 1):
-        print(f"  Processing page {page_num}/{num_pages}...")
+        print(f"  Page {page_num}/{num_pages}...")
 
         try:
-            # ONLY convert the current page to an image to save RAM
-            # Using thread_count=1 ensures we don't spike CPU/RAM with parallel conversion
+            # 2. Convert ONLY the current page
             page_images = convert_from_path(
                 pdf_path, 
                 dpi=dpi, 
                 first_page=page_num, 
                 last_page=page_num,
-                thread_count=1
+                thread_count=1 # M1 is fast; 1 thread keeps memory stable
             )
             
-            if not page_images:
-                continue
-                
+            if not page_images: continue
             image = page_images[0]
             
-            # Save page image to disk
+            # 3. Save and prepare
             img_path = os.path.join(output_dir, f"{pdf_name}_page_{page_num}.jpg")
             image.save(img_path, 'JPEG')
-
-            # Convert PIL image to numpy array for PaddleOCR
             img_array = np.array(image)
 
-            # Run OCR with layout analysis (PPStructure) or standard OCR
+            # 4. OCR Step (Fixed for PaddleOCR 3.0)
             if USE_STRUCTURE:
-                # PPStructureV3: Use .predict() NOT the object as a function
+                # Use .predict() for V3
+                # Add 'slice' if you still get memory crashes on specific large pages
                 result = ocr.predict(img_array)
                 text_blocks = process_structure_result(result)
                 layout_info = extract_layout_info(result)
             else:
-                # Standard OCR for PaddleOCR 2.x
                 result = ocr.ocr(img_array, cls=True)
                 text_blocks = process_standard_result(result)
                 layout_info = None
 
-            page_results = {
+            pdf_results["pages"].append({
                 "page_number": page_num,
                 "image_path": img_path,
                 "image_width": image.width,
@@ -268,29 +255,17 @@ def process_pdf(pdf_path, output_dir):
                 "text_blocks": text_blocks,
                 "total_blocks": len(text_blocks),
                 "layout_regions": layout_info
-            }
+            })
 
-            pdf_results["pages"].append(page_results)
-            print(f"    Found {len(text_blocks)} text blocks", end="")
-            if layout_info:
-                print(f" in {len(layout_info)} layout regions")
-            else:
-                print()
-
-            # Explicit cleanup for the current page
+            # 5. AGGRESSIVE CLEANUP (Required for M1 Unified Memory)
             del img_array
             del image
             del page_images
+            gc.collect() 
 
         except Exception as e:
-            print(f"Error processing page {page_num}: {e}")
-            pdf_results["pages"].append({
-                "page_number": page_num,
-                "error": str(e)
-            })
-        
-        # Force garbage collection after every page
-        gc.collect() 
+            print(f"  ! Error on page {page_num}: {e}")
+            pdf_results["pages"].append({"page_number": page_num, "error": str(e)})
 
     return pdf_results
 
