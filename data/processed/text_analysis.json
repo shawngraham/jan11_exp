@@ -3,22 +3,562 @@
     "total_articles": 3175,
     "ripper_news_count": 19
   },
+  "word_cloud_data": [
+    {
+      "text": "man",
+      "size": 28
+    },
+    {
+      "text": "have",
+      "size": 24
+    },
+    {
+      "text": "one",
+      "size": 22
+    },
+    {
+      "text": "are",
+      "size": 19
+    },
+    {
+      "text": "who",
+      "size": 18
+    },
+    {
+      "text": "him",
+      "size": 18
+    },
+    {
+      "text": "not",
+      "size": 16
+    },
+    {
+      "text": "jack",
+      "size": 16
+    },
+    {
+      "text": "london",
+      "size": 14
+    },
+    {
+      "text": "but",
+      "size": 14
+    },
+    {
+      "text": "house",
+      "size": 14
+    },
+    {
+      "text": "she",
+      "size": 14
+    },
+    {
+      "text": "whitechapel",
+      "size": 13
+    },
+    {
+      "text": "out",
+      "size": 13
+    },
+    {
+      "text": "ripper",
+      "size": 13
+    },
+    {
+      "text": "police",
+      "size": 12
+    },
+    {
+      "text": "years",
+      "size": 11
+    },
+    {
+      "text": "work",
+      "size": 10
+    },
+    {
+      "text": "her",
+      "size": 10
+    },
+    {
+      "text": "most",
+      "size": 10
+    },
+    {
+      "text": "great",
+      "size": 9
+    },
+    {
+      "text": "men",
+      "size": 9
+    },
+    {
+      "text": "two",
+      "size": 9
+    },
+    {
+      "text": "has",
+      "size": 9
+    },
+    {
+      "text": "day",
+      "size": 9
+    },
+    {
+      "text": "land",
+      "size": 8
+    },
+    {
+      "text": "how",
+      "size": 8
+    },
+    {
+      "text": "never",
+      "size": 8
+    },
+    {
+      "text": "now",
+      "size": 8
+    },
+    {
+      "text": "what",
+      "size": 8
+    },
+    {
+      "text": "night",
+      "size": 8
+    },
+    {
+      "text": "asylum",
+      "size": 8
+    },
+    {
+      "text": "like",
+      "size": 7
+    },
+    {
+      "text": "you",
+      "size": 7
+    },
+    {
+      "text": "took",
+      "size": 7
+    },
+    {
+      "text": "all",
+      "size": 7
+    },
+    {
+      "text": "other",
+      "size": 7
+    },
+    {
+      "text": "several",
+      "size": 7
+    },
+    {
+      "text": "ing",
+      "size": 7
+    },
+    {
+      "text": "committed",
+      "size": 7
+    },
+    {
+      "text": "time",
+      "size": 7
+    },
+    {
+      "text": "being",
+      "size": 6
+    },
+    {
+      "text": "over",
+      "size": 6
+    },
+    {
+      "text": "under",
+      "size": 6
+    },
+    {
+      "text": "only",
+      "size": 6
+    },
+    {
+      "text": "before",
+      "size": 6
+    },
+    {
+      "text": "may",
+      "size": 6
+    },
+    {
+      "text": "three",
+      "size": 6
+    },
+    {
+      "text": "murders",
+      "size": 6
+    },
+    {
+      "text": "about",
+      "size": 6
+    }
+  ],
+  "sensational_language": {
+    "horror": {
+      "total_uses": 1,
+      "contexts": []
+    },
+    "fiend": {
+      "total_uses": 2,
+      "contexts": []
+    },
+    "horrible": {
+      "total_uses": 1,
+      "contexts": []
+    }
+  },
   "whitechapel_analysis": {
     "stats": {
-      "avg_sentence_length": 0,
-      "exclamations_per_article": 0.0,
-      "sensational_words_per_article": 0.0
+      "avg_sentence_length": 30.6,
+      "exclamations_per_article": 0.58,
+      "sensational_words_per_article": 0.21
     },
-    "top_keywords": [],
-    "top_phrases": []
+    "top_keywords": [
+      {
+        "word": "man",
+        "count": 28
+      },
+      {
+        "word": "have",
+        "count": 24
+      },
+      {
+        "word": "one",
+        "count": 22
+      },
+      {
+        "word": "are",
+        "count": 19
+      },
+      {
+        "word": "who",
+        "count": 18
+      },
+      {
+        "word": "him",
+        "count": 18
+      },
+      {
+        "word": "not",
+        "count": 16
+      },
+      {
+        "word": "jack",
+        "count": 16
+      },
+      {
+        "word": "london",
+        "count": 14
+      },
+      {
+        "word": "but",
+        "count": 14
+      },
+      {
+        "word": "house",
+        "count": 14
+      },
+      {
+        "word": "she",
+        "count": 14
+      },
+      {
+        "word": "whitechapel",
+        "count": 13
+      },
+      {
+        "word": "out",
+        "count": 13
+      },
+      {
+        "word": "ripper",
+        "count": 13
+      },
+      {
+        "word": "police",
+        "count": 12
+      },
+      {
+        "word": "years",
+        "count": 11
+      },
+      {
+        "word": "work",
+        "count": 10
+      },
+      {
+        "word": "her",
+        "count": 10
+      },
+      {
+        "word": "most",
+        "count": 10
+      }
+    ],
+    "top_phrases": [
+      {
+        "phrase": "ripper jack",
+        "count": 5
+      },
+      {
+        "phrase": "murders such",
+        "count": 3
+      },
+      {
+        "phrase": "years age",
+        "count": 3
+      },
+      {
+        "phrase": "jack ripper",
+        "count": 3
+      },
+      {
+        "phrase": "who man",
+        "count": 2
+      },
+      {
+        "phrase": "men not",
+        "count": 2
+      },
+      {
+        "phrase": "london how",
+        "count": 2
+      },
+      {
+        "phrase": "how murders",
+        "count": 2
+      },
+      {
+        "phrase": "such whitechapel",
+        "count": 2
+      },
+      {
+        "phrase": "all have",
+        "count": 2
+      },
+      {
+        "phrase": "whitechapel are",
+        "count": 2
+      },
+      {
+        "phrase": "police tuesday",
+        "count": 2
+      },
+      {
+        "phrase": "man young",
+        "count": 2
+      },
+      {
+        "phrase": "bed day",
+        "count": 2
+      },
+      {
+        "phrase": "build slight",
+        "count": 2
+      },
+      {
+        "phrase": "how are",
+        "count": 2
+      },
+      {
+        "phrase": "are are",
+        "count": 2
+      },
+      {
+        "phrase": "she him",
+        "count": 2
+      },
+      {
+        "phrase": "lodging house",
+        "count": 2
+      },
+      {
+        "phrase": "lord eegland",
+        "count": 1
+      }
+    ]
   },
   "general_news_analysis": {
     "stats": {
-      "avg_sentence_length": 0,
-      "exclamations_per_article": 0.0,
-      "sensational_words_per_article": 0.0
+      "avg_sentence_length": 20.0,
+      "exclamations_per_article": 0.21,
+      "sensational_words_per_article": 0.04
     },
-    "top_keywords": [],
-    "top_phrases": []
+    "top_keywords": [
+      {
+        "word": "her",
+        "count": 792
+      },
+      {
+        "word": "not",
+        "count": 682
+      },
+      {
+        "word": "have",
+        "count": 677
+      },
+      {
+        "word": "are",
+        "count": 633
+      },
+      {
+        "word": "she",
+        "count": 575
+      },
+      {
+        "word": "but",
+        "count": 569
+      },
+      {
+        "word": "one",
+        "count": 536
+      },
+      {
+        "word": "you",
+        "count": 524
+      },
+      {
+        "word": "all",
+        "count": 501
+      },
+      {
+        "word": "has",
+        "count": 498
+      },
+      {
+        "word": "him",
+        "count": 398
+      },
+      {
+        "word": "who",
+        "count": 389
+      },
+      {
+        "word": "out",
+        "count": 278
+      },
+      {
+        "word": "man",
+        "count": 267
+      },
+      {
+        "word": "now",
+        "count": 260
+      },
+      {
+        "word": "our",
+        "count": 246
+      },
+      {
+        "word": "any",
+        "count": 244
+      },
+      {
+        "word": "what",
+        "count": 244
+      },
+      {
+        "word": "time",
+        "count": 241
+      },
+      {
+        "word": "very",
+        "count": 223
+      }
+    ],
+    "top_phrases": [
+      {
+        "phrase": "united states",
+        "count": 38
+      },
+      {
+        "phrase": "she her",
+        "count": 20
+      },
+      {
+        "phrase": "betty lady",
+        "count": 20
+      },
+      {
+        "phrase": "you you",
+        "count": 19
+      },
+      {
+        "phrase": "eee eee",
+        "count": 19
+      },
+      {
+        "phrase": "did not",
+        "count": 17
+      },
+      {
+        "phrase": "her her",
+        "count": 17
+      },
+      {
+        "phrase": "could not",
+        "count": 15
+      },
+      {
+        "phrase": "father her",
+        "count": 15
+      },
+      {
+        "phrase": "not you",
+        "count": 15
+      },
+      {
+        "phrase": "rosebery lord",
+        "count": 15
+      },
+      {
+        "phrase": "her she",
+        "count": 14
+      },
+      {
+        "phrase": "can you",
+        "count": 13
+      },
+      {
+        "phrase": "have you",
+        "count": 13
+      },
+      {
+        "phrase": "she but",
+        "count": 12
+      },
+      {
+        "phrase": "one any",
+        "count": 12
+      },
+      {
+        "phrase": "not one",
+        "count": 12
+      },
+      {
+        "phrase": "not are",
+        "count": 12
+      },
+      {
+        "phrase": "who have",
+        "count": 11
+      },
+      {
+        "phrase": "have who",
+        "count": 11
+      }
+    ]
   }
 }

@@ -41,34 +41,36 @@ def analyze_group(articles):
         "exclamation_intensity": 0,
         "sensational_score": 0,
         "top_keywords": [],
-        "top_phrases": []
+        "top_phrases": [],
+        "sensational_word_details": Counter()
     }
 
     if not articles:
         return results
-    
+
     word_counts = Counter()
     bigram_counts = Counter()
-    sensational_hits = 0
+    sensational_word_counter = Counter()
     total_excl = 0
     sentence_lengths = []
 
     for art in articles:
-        text = art.get("text", "")
+        text = art.get("full_text", "") or art.get("text", "")
         clean_text = text.lower()
-        
+
         words = get_words(text)
         word_counts.update(words)
-        
+
         for i in range(len(words) - 1):
             bigram_counts.update([f"{words[i]} {words[i+1]}"])
-        
+
         for word in SENSATIONAL_WORDS:
             matches = len(re.findall(rf'\b{word}\b', clean_text))
-            sensational_hits += matches
-            
+            if matches > 0:
+                sensational_word_counter[word] += matches
+
         total_excl += text.count("!")
-        
+
         sentences = re.split(r'[.!?]+', text)
         lengths = [len(s.split()) for s in sentences if len(s.split()) > 2]
         if lengths:
@@ -78,12 +80,13 @@ def analyze_group(articles):
     results["total_words"] = sum(word_counts.values())
     if sentence_lengths:
         results["avg_sentence_len"] = round(sum(sentence_lengths)/len(sentence_lengths), 1)
-    
+
     results["exclamation_intensity"] = round(total_excl / len(articles), 2)
-    results["sensational_score"] = round(sensational_hits / len(articles), 2)
+    results["sensational_score"] = round(sum(sensational_word_counter.values()) / len(articles), 2) if articles else 0
     results["top_keywords"] = word_counts.most_common(50)
     results["top_phrases"] = bigram_counts.most_common(20)
-    
+    results["sensational_word_details"] = sensational_word_counter
+
     return results
 
 def main():
@@ -110,11 +113,28 @@ def main():
     stats_whitechapel = analyze_group(wc_articles)
     stats_general = analyze_group(other_articles)
 
+    # Generate word cloud data from top keywords
+    word_cloud_data = [
+        {"text": word, "size": count}
+        for word, count in stats_whitechapel["top_keywords"][:50]
+    ]
+
+    # Generate sensational language data
+    sensational_language = {
+        word: {
+            "total_uses": count,
+            "contexts": []  # Could be expanded later
+        }
+        for word, count in stats_whitechapel["sensational_word_details"].items()
+    }
+
     report = {
         "summary": {
             "total_articles": len(all_articles),
             "ripper_news_count": len(wc_articles)
         },
+        "word_cloud_data": word_cloud_data,
+        "sensational_language": sensational_language,
         "whitechapel_analysis": {
             "stats": {
                 "avg_sentence_length": stats_whitechapel["avg_sentence_len"],
