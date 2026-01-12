@@ -8,7 +8,7 @@ matplotlib>=3.7.0
 scipy>=1.10.0
 # OCR Engines (install based on your choice)
 # For local OCR with PaddleOCR:
-paddleocr
+paddleocr==3.3.2
 paddlepaddle
 # For cloud-based OCR with Gemini Vision API:
 google-generativeai>=0.3.0

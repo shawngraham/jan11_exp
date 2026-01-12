@@ -81,7 +81,7 @@ def main():
 
     MIN_KB = 250
     DPI = 300
-    MAX_SNIP_HEIGHT = 3800 # PaddleOCR limit is 4000; 3800 is safe.
+    MAX_SNIP_HEIGHT = 2000 # PaddleOCR limit is 4000; 3800 is safe.
 
     pdf_files = sorted(pdf_dir.glob("*.pdf"))
     all_metadata = []
