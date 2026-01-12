@@ -6,6 +6,7 @@ Executes all data processing scripts in sequence
 
 import sys
 import subprocess
+import argparse
 from pathlib import Path
 
 def run_script(script_name):
@@ -30,13 +31,43 @@ def run_script(script_name):
         return False
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Run the Whitechapel in Shawville data processing pipeline',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Run with default PaddleOCR (local processing)
+  python run_pipeline.py
+
+  # Run with Gemini Vision API (cloud processing)
+  python run_pipeline.py --ocr-engine gemini
+
+  # Run with specific OCR engine
+  python run_pipeline.py --ocr-engine paddleocr
+        """
+    )
+    parser.add_argument(
+        '--ocr-engine',
+        choices=['paddleocr', 'gemini'],
+        default='paddleocr',
+        help='OCR engine to use: "paddleocr" for local processing (default), "gemini" for Gemini Vision API'
+    )
+
+    args = parser.parse_args()
+
     print("=" * 60)
     print("WHITECHAPEL IN SHAWVILLE - DATA PROCESSING PIPELINE")
     print("=" * 60)
+    print(f"OCR Engine: {args.ocr_engine.upper()}")
+    print("=" * 60)
+
+    # Choose OCR script based on engine selection
+    ocr_script = "process_pdfs_gemini.py" if args.ocr_engine == "gemini" else "process_pdfs.py"
 
     scripts = [
         "preprocess.py",      # Step 1: Resize PDFs, detect columns, split into images
-        "process_pdfs.py",    # Step 2: Run OCR on preprocessed columns
+        ocr_script,           # Step 2: Run OCR on preprocessed columns (PaddleOCR or Gemini)
         "segment_articles.py",
         "tag_articles.py",
         "generate_timeline.py",
