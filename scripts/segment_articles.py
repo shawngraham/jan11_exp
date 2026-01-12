@@ -1,79 +1,77 @@
 #!/usr/bin/env python3
 """
-Article Segmentation Script
-Analyzes OCR output to group text blocks into individual articles.
-Optimized for 19th-century newspapers like "The Equity".
+Step 3: Article Segmentation
+- Reads streaming .jsonl OCR output.
+- Groups text blocks into articles based on headlines and vertical gaps.
+- Optimized for Tesseract output and 1880s newspaper layouts.
 """
 
 import json
 import re
 from pathlib import Path
+from collections import defaultdict
 
-def is_likely_headline(block, surrounding_blocks):
+def is_likely_headline(block, avg_height):
     """
-    Determine if a text block is likely a headline or sub-head.
-    19th-century headlines are often All-Caps, centered, or slightly larger.
+    1880s Headline Heuristics.
     """
     text = block["text"].strip()
-    if len(text) < 3 or len(text) > 150: 
+    if len(text) < 3 or len(text) > 100: 
         return False
 
-    height = block["bbox"]["height"]
-    avg_height = sum(b["bbox"]["height"] for b in surrounding_blocks) / len(surrounding_blocks)
+    # Heuristic 1: All Caps is the #1 indicator for 19th-century headers
+    # (e.g., "LOCAL NEWS", "THE MARKETS", "DIED")
+    is_caps = text.isupper()
+    
+    # Heuristic 2: Large font (if Tesseract detected it correctly)
+    is_tall = block["bbox"][3] > (avg_height * 1.3)
 
-    # Heuristic 1: Significantly taller than surrounding text
-    is_tall = height > avg_height * 1.25
-    
-    # Heuristic 2: Short and All Caps (e.g., "LOCAL NEWS", "DIED")
-    is_caps_short = text.isupper() and len(text) < 60
-    
-    # Heuristic 3: Title Case and short (not ending in sentence punctuation)
-    is_title_short = text.istitle() and not text.endswith(('.', '!', '?')) and len(text) < 80
+    # Heuristic 3: Common 1880s sections
+    is_common_section = any(word in text.upper() for word in ["NOTICE", "WANTED", "FOR SALE", "BIRTHS", "MARRIED"])
 
     score = 0
-    if is_tall: score += 2
-    if is_caps_short: score += 1
-    if is_title_short: score += 1
+    if is_caps: score += 2
+    if is_tall: score += 1
+    if is_common_section: score += 1
     
     return score >= 2
 
-def group_into_articles(text_blocks):
-    """
-    Group text blocks into articles using column and vertical positioning.
-    """
-    if not text_blocks:
+def group_into_articles(blocks):
+    if not blocks:
         return []
 
-    # Trust the 'column' index from preprocess.py, then sort by Y position
-    sorted_blocks = sorted(text_blocks, key=lambda b: (b.get("column", 0), b["bbox"]["y"]))
+    # Sort by column, then by Y position
+    # blocks[bbox] is [x, y, w, h]
+    sorted_blocks = sorted(blocks, key=lambda b: (b.get("col", 0), b["bbox"][1]))
+
+    # Calculate average line height for the page to use in heuristics
+    avg_h = sum(b["bbox"][3] for b in sorted_blocks) / len(sorted_blocks)
 
     articles = []
     current_article = None
-    article_id_counter = 1
-
+    
     for i, block in enumerate(sorted_blocks):
-        # Gather surrounding blocks for height context
-        surrounding = sorted_blocks[max(0, i-3):min(len(sorted_blocks), i+4)]
-        is_headline = is_likely_headline(block, surrounding)
-
+        is_headline = is_likely_headline(block, avg_h)
+        
         start_new = False
         if current_article is None:
             start_new = True
         else:
             prev_block = sorted_blocks[i - 1]
             
-            # RULE 1: Forced break on a detected headline
+            # RULE 1: Headline detection
             if is_headline:
                 start_new = True
             
-            # RULE 2: Break on column change
-            elif block.get("column") != prev_block.get("column"):
+            # RULE 2: Column change
+            elif block.get("col") != prev_block.get("col"):
                 start_new = True
                 
-            # RULE 3: Significant Vertical Gap (approx 2.5x line height)
+            # RULE 3: Vertical Gap (approx 2.5x line height)
             else:
-                gap = block["bbox"]["y"] - (prev_block["bbox"]["y"] + prev_block["bbox"]["height"])
-                if gap > (block["bbox"]["height"] * 2.5):
+                # y_gap = current_y - (prev_y + prev_height)
+                gap = block["bbox"][1] - (prev_block["bbox"][1] + prev_block["bbox"][3])
+                if gap > (avg_h * 2.5):
                     start_new = True
 
         if start_new:
@@ -81,100 +79,84 @@ def group_into_articles(text_blocks):
                 articles.append(current_article)
 
             current_article = {
-                "article_id": article_id_counter,
                 "headline": block["text"] if is_headline else "Untitled Snippet",
                 "blocks": [block],
-                "column": block.get("column"),
-                "start_y": block["bbox"]["y"]
+                "column": block.get("col"),
+                "y_start": block["bbox"][1]
             }
-            article_id_counter += 1
         else:
             current_article["blocks"].append(block)
 
     if current_article:
         articles.append(current_article)
-        
     return articles
 
-def parse_metadata_from_filename(filename):
-    """
-    Extract Pub ID and Date from filename format: 83471_1888-10-25.pdf
-    """
-    # Pattern to match: 5 digits, underscore, YYYY-MM-DD
-    match = re.search(r'(\d{5})_(\d{4}-\d{2}-\d{2})', filename)
-    if match:
-        return {
-            "pub_id": match.group(1),
-            "date": match.group(2)
-        }
-    return {"pub_id": "unknown", "date": "unknown"}
-
 def main():
-    # Setup paths relative to script location
-    script_dir = Path(__file__).parent
-    project_root = script_dir if (script_dir / "data").exists() else script_dir.parent
+    script_dir = Path(__file__).resolve().parent
+    project_root = script_dir.parent
     
-    input_file = project_root / "data" / "raw" / "ocr_output.json"
+    # Switch to your actual output file name (from Step 2)
+    input_file = project_root / "data" / "raw" / "ocr_output_tesseract.jsonl"
     output_file = project_root / "data" / "processed" / "articles.json"
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     if not input_file.exists():
-        print(f"Error: OCR output not found at {input_file}")
+        print(f"Error: {input_file} not found.")
         return
 
-    print(f"Loading OCR data from {input_file}...")
+    # 1. Load streaming data and group by Page
+    print("Loading and grouping OCR data...")
+    data_by_page = defaultdict(list)
+    
     with open(input_file, 'r', encoding='utf-8') as f:
-        ocr_data = json.load(f)
+        for line in f:
+            entry = json.loads(line)
+            # Create a unique key for each page of each PDF
+            page_key = (entry['pub'], entry['page'])
+            data_by_page[page_key].append(entry)
 
     all_articles = []
-    
-    for pdf_data in ocr_data.get("pdfs", []):
-        pdf_filename = pdf_data["filename"]
-        meta = parse_metadata_from_filename(pdf_filename)
+
+    # 2. Process each page
+    for (pub_name, page_num), blocks in data_by_page.items():
+        print(f"Segmenting: {pub_name} - Page {page_num}")
         
-        print(f"Segmenting: {pdf_filename} (Date: {meta['date']})")
+        articles = group_into_articles(blocks)
 
-        for page_data in pdf_data.get("pages", []):
-            page_num = page_data["page_number"]
-            articles = group_into_articles(page_data.get("text_blocks", []))
+        for art_idx, art in enumerate(articles, 1):
+            full_text = " ".join(b["text"] for b in art["blocks"]).strip()
+            
+            # Calculate aggregate bounding box for the whole article
+            all_x = [b["bbox"][0] for b in art["blocks"]]
+            all_y = [b["bbox"][1] for b in art["blocks"]]
+            all_x_end = [b["bbox"][0] + b["bbox"][2] for b in art["blocks"]]
+            all_y_end = [b["bbox"][1] + b["bbox"][3] for b in art["blocks"]]
 
-            for art in articles:
-                # Combine block text into full article text
-                full_text = " ".join(b["text"] for b in art["blocks"]).strip()
-                
-                # Calculate aggregate bounding box
-                all_x = [b["bbox"]["x"] for b in art["blocks"]]
-                all_y = [b["bbox"]["y"] for b in art["blocks"]]
-                all_w = [b["bbox"]["x"] + b["bbox"]["width"] for b in art["blocks"]]
-                all_h = [b["bbox"]["y"] + b["bbox"]["height"] for b in art["blocks"]]
-
-                article_entry = {
-                    "article_id": f"{meta['pub_id']}_{meta['date']}_p{page_num}_{art['article_id']}",
-                    "pub_id": meta["pub_id"],
-                    "date": meta["date"],
-                    "page": page_num,
-                    "column": art["column"],
-                    "headline": art["headline"],
-                    "text": full_text,
-                    "word_count": len(full_text.split()),
-                    "bbox": {
-                        "x": min(all_x),
-                        "y": min(all_y),
-                        "width": max(all_w) - min(all_x),
-                        "height": max(all_h) - min(all_y)
-                    }
+            article_entry = {
+                "article_id": f"{pub_name}_p{page_num}_a{art_idx:03d}",
+                "pub": pub_name,
+                "page": page_num,
+                "column": art["column"],
+                "headline": art["headline"],
+                "text": full_text,
+                "word_count": len(full_text.split()),
+                "bbox": {
+                    "x": min(all_x),
+                    "y": min(all_y),
+                    "w": max(all_x_end) - min(all_x),
+                    "h": max(all_y_end) - min(all_y)
                 }
-                all_articles.append(article_entry)
+            }
+            all_articles.append(article_entry)
 
-    # Save processed data
+    # 3. Save to JSON
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump({
-            "total_articles": len(all_articles),
+            "count": len(all_articles),
             "articles": all_articles
         }, f, indent=2, ensure_ascii=False)
 
-    print("=" * 60)
-    print(f"SUCCESS: Extracted {len(all_articles)} articles.")
+    print(f"\n✓ Success! Extracted {len(all_articles)} articles.")
     print(f"Saved to: {output_file}")
 
 if __name__ == "__main__":

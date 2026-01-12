@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Automated Article Tagging Script
-Classifies articles based on keyword matching and content analysis.
-Fixes field name mismatches and adds word-boundary protection.
+Step 4: Automated Article Tagging
+- Classifies 1880s articles based on historically relevant keywords.
+- Optimized with pre-compiled regex for speed.
+- Aligns with Step 3 field names (pub, page, col, text, headline).
 """
 
 import json
@@ -10,7 +11,7 @@ import re
 from pathlib import Path
 from collections import defaultdict
 
-# Tag definitions
+# Tag definitions with weights
 TAG_KEYWORDS = {
     "whitechapel_ripper": {
         "keywords": [
@@ -53,76 +54,84 @@ TAG_KEYWORDS = {
     }
 }
 
+# Pre-compile regex for every keyword to maximize speed
+for tag in TAG_KEYWORDS:
+    TAG_KEYWORDS[tag]["compiled"] = [
+        re.compile(rf'\b{re.escape(kw.lower())}\b') 
+        for kw in TAG_KEYWORDS[tag]["keywords"]
+    ]
+
 def calculate_tag_scores(text, headline):
-    """Calculate scores using word boundaries for accuracy."""
     combined = (headline + " " + text).lower()
+    headline_lower = headline.lower()
     scores = defaultdict(float)
 
     for tag, config in TAG_KEYWORDS.items():
         score = 0
-        for kw in config["keywords"]:
-            # Use regex to find whole words only (\b)
-            # This prevents "ripper" matching "stripper"
-            pattern = rf'\b{re.escape(kw.lower())}\b'
-            matches = len(re.findall(pattern, combined))
+        for pattern in config["compiled"]:
+            # Count occurrences in full text
+            matches = len(pattern.findall(combined))
             
             if matches > 0:
-                # Check if keyword is in headline (worth 3x)
-                in_headline = len(re.findall(pattern, headline.lower()))
-                score += (in_headline * 3) + (matches - in_headline)
+                # Check if keyword is specifically in the headline (bonus weight)
+                in_headline = len(pattern.findall(headline_lower))
+                # Headline matches are worth significantly more
+                score += (in_headline * 5) + (matches - in_headline)
         
-        scores[tag] = score * config["weight"]
+        if score > 0:
+            scores[tag] = score * config["weight"]
     
     return scores
 
 def main():
-    # 1. Path Setup
-    script_dir = Path(__file__).parent
-    project_root = script_dir if (script_dir / "data").exists() else script_dir.parent
+    # Setup paths
+    script_dir = Path(__file__).resolve().parent
+    project_root = script_dir.parent
     
     input_file = project_root / "data" / "processed" / "articles.json"
     output_file = project_root / "data" / "processed" / "tagged_articles.json"
 
     if not input_file.exists():
-        print(f"Error: {input_file} not found. Run segment_articles.py first.")
+        print(f"Error: {input_file} not found. Run the segmenter first.")
         return
 
-    # 2. Load Data
+    # Load articles
     with open(input_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
     articles = data.get("articles", [])
     print(f"Tagging {len(articles)} articles...")
 
-    # 3. Process
     for art in articles:
-        # Note: we use art["text"] because that's what segment_articles.py outputs
+        # Calculate scores based on the text and headline generated in Step 3
         scores = calculate_tag_scores(art.get("text", ""), art.get("headline", ""))
         
-        # Sort and filter tags
+        # Sort tags by score
         assigned = []
         for tag, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
-            if score > 0:
-                assigned.append({
-                    "tag": tag,
-                    "score": round(score, 2)
-                })
+            assigned.append({
+                "tag": tag,
+                "score": round(score, 2)
+            })
         
+        # Determine metadata
         art["tags"] = assigned
         art["primary_tag"] = assigned[0]["tag"] if assigned else "general"
-        art["is_whitechapel"] = any(t["tag"] == "whitechapel_ripper" for t in assigned)
+        
+        # Specific flag for your interest in 1888 true crime
+        art["is_ripper_related"] = any(t["tag"] == "whitechapel_ripper" for t in assigned)
 
-    # 4. Save
+    # Save results
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump({"articles": articles}, f, indent=2, ensure_ascii=False)
 
-    # 5. Summary
-    ripper_count = sum(1 for a in articles if a["is_whitechapel"])
-    print("=" * 60)
+    # Summary Stats
+    ripper_news = sum(1 for a in articles if a["is_ripper_related"])
+    print("-" * 30)
     print(f"Tagging Complete!")
-    print(f"  Total articles: {len(articles)}")
-    print(f"  Whitechapel-related: {ripper_count}")
-    print(f"  Results saved to: {output_file}")
+    print(f"Total articles processed: {len(articles)}")
+    print(f"Whitechapel/Ripper detections: {ripper_news}")
+    print(f"Results saved to: {output_file}")
 
 if __name__ == "__main__":
     main()

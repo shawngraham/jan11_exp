@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Pipeline Runner Script
-Executes all data processing scripts in sequence
+Pipeline Runner Script - Whitechapel in Shawville
+Executes the full 6-step data processing sequence.
+Defaults to Tesseract OCR for M1 stability.
 """
 
 import sys
@@ -17,6 +18,8 @@ def run_script(script_name):
     print('=' * 60)
 
     try:
+        # We use capture_output=False so you can see the 
+        # real-time progress prints from the OCR and Preprocessor
         result = subprocess.run(
             [sys.executable, str(script_path)],
             check=True,
@@ -34,24 +37,13 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(
         description='Run the Whitechapel in Shawville data processing pipeline',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Run with default PaddleOCR (local processing)
-  python run_pipeline.py
-
-  # Run with Gemini Vision API (cloud processing)
-  python run_pipeline.py --ocr-engine gemini
-
-  # Run with specific OCR engine
-  python run_pipeline.py --ocr-engine paddleocr
-        """
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
         '--ocr-engine',
-        choices=['paddleocr', 'gemini'],
-        default='paddleocr',
-        help='OCR engine to use: "paddleocr" for local processing (default), "gemini" for Gemini Vision API'
+        choices=['tesseract', 'paddleocr', 'gemini'],
+        default='tesseract',
+        help='OCR engine to use: "tesseract" (default/stable), "paddleocr" (deep learning), or "gemini"'
     )
 
     args = parser.parse_args()
@@ -62,16 +54,22 @@ Examples:
     print(f"OCR Engine: {args.ocr_engine.upper()}")
     print("=" * 60)
 
-    # Choose OCR script based on engine selection
-    ocr_script = "process_pdfs_gemini.py" if args.ocr_engine == "gemini" else "process_pdfs.py"
+    # Logic to select Step 2 script
+    if args.ocr_engine == "gemini":
+        ocr_script = "process_pdfs_gemini.py"
+    elif args.ocr_engine == "paddleocr":
+        ocr_script = "process_pdfs.py"
+    else:
+        ocr_script = "process_pdfs_tesseract.py"
 
+    # The Canonical 6-Step Sequence
     scripts = [
-        "preprocess.py",      # Step 1: Resize PDFs, detect columns, split into images
-        ocr_script,           # Step 2: Run OCR on preprocessed columns (PaddleOCR or Gemini)
-        "segment_articles.py",
-        "tag_articles.py",
-        "generate_timeline.py",
-        "analyze_text.py"
+        "preprocess.py",        # Step 1: 300DPI Snippets + Split at 2000px
+        ocr_script,             # Step 2: The chosen OCR Engine (Default: Tesseract)
+        "segment_articles.py",  # Step 3: JSONL -> Article Grouping
+        "tag_articles.py",      # Step 4: Thematic/Ripper Classification
+        "generate_timeline.py", # Step 5: Historical News Lag Analysis
+        "analyze_text.py"       # Step 6: Linguistic Sensationalism Index
     ]
 
     success_count = 0
@@ -81,19 +79,20 @@ Examples:
             success_count += 1
         else:
             print(f"\nPipeline stopped due to error in {script}")
+            print("Troubleshooting: Check memory usage or file paths.")
             sys.exit(1)
 
     print("\n" + "=" * 60)
     print(f"PIPELINE COMPLETE!")
     print(f"Successfully completed {success_count}/{len(scripts)} steps")
     print("=" * 60)
-    print("\nGenerated data files:")
-    print("  - data/raw/ocr_output.json")
-    print("  - data/processed/articles.json")
-    print("  - data/processed/tagged_articles.json")
-    print("  - data/processed/timeline.json")
-    print("  - data/processed/text_analysis.json")
-    print("\nReady to build website!")
+    print("\nGenerated data files for visualization:")
+    print("  - data/raw/ocr_output_tesseract.jsonl (Raw OCR)")
+    print("  - data/processed/articles.json        (Segments)")
+    print("  - data/processed/tagged_articles.json (Thematic Data)")
+    print("  - data/processed/timeline.json        (Temporal/Lag Data)")
+    print("  - data/processed/text_analysis.json   (Linguistic Stats)")
+    print("\nReady to launch Whitechapel in Shawville interactive!")
 
 if __name__ == "__main__":
     main()
