@@ -75,16 +75,38 @@ brew install poppler
 which pdfinfo
 ```
 
-**Note:** EasyOCR runs in CPU mode on Apple Silicon. GPU acceleration is not required.
+**Note:** PaddleOCR runs in CPU mode on Apple Silicon. GPU acceleration is not required.
+
+### OCR Engine Options
+
+This pipeline supports two OCR engines:
+
+1. **PaddleOCR (Default)** - Local, open-source OCR
+   - Runs entirely on your machine
+   - No API costs
+   - Good accuracy for newspaper text
+   - Requires PaddleOCR and PaddlePaddle packages
+
+2. **Gemini Vision API** - Cloud-based OCR by Google
+   - Uses Google's Gemini Pro Vision API
+   - Potentially higher accuracy
+   - Requires API key and incurs usage costs
+   - Better at handling complex layouts
+   - Requires google-generativeai package
 
 ### Required Dependencies
 
-- **EasyOCR**: Lightweight OCR engine for text extraction
+**Core Dependencies:**
 - **pdf2image**: PDF to image conversion
 - **OpenCV**: Image processing and column detection
 - **PIL/Pillow**: Image manipulation
 - **NumPy**: Numerical operations
-- **PyTorch**: Deep learning backend for EasyOCR
+
+**OCR Engine (choose one):**
+- **PaddleOCR + PaddlePaddle**: For local OCR processing (default)
+- **google-generativeai**: For Gemini Vision API (cloud-based)
+
+See `scripts/requirements.txt` for version details.
 
 ### Running the Pipeline
 
@@ -92,10 +114,29 @@ which pdfinfo
    - Place your newspaper PDF files in the `pdfs/` directory
    - The pipeline expects PDFs from BAnQ or similar archives
 
-2. **Run the full pipeline:**
+2. **Choose your OCR engine and run the pipeline:**
+
+   **Option A: PaddleOCR (Default - Local Processing)**
    ```bash
    python3 scripts/run_pipeline.py
+   # or explicitly:
+   python3 scripts/run_pipeline.py --ocr-engine paddleocr
    ```
+
+   **Option B: Gemini Vision API (Cloud Processing)**
+   ```bash
+   # First, set your API key:
+   export GEMINI_API_KEY="your-api-key-here"
+
+   # Then run with Gemini:
+   python3 scripts/run_pipeline.py --ocr-engine gemini
+   ```
+
+   **Getting a Gemini API Key:**
+   1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   2. Sign in with your Google account
+   3. Create a new API key
+   4. Set it as an environment variable: `export GEMINI_API_KEY="your-key"`
 
    This executes six steps in sequence:
 
@@ -111,11 +152,12 @@ which pdfinfo
    - Outputs: `data/preprocessed/{pdf_name}/` with column images and metadata
    - **Debug mode:** Use `--debug` flag to save 4-panel visualization
 
-   **Stage 2: OCR (`process_pdfs.py`)**
+   **Stage 2: OCR (`process_pdfs.py` or `process_pdfs_gemini.py`)**
    - Reads preprocessed column images from Stage 1
-   - Runs EasyOCR on each column independently
+   - Runs OCR engine (PaddleOCR or Gemini Vision) on each snippet independently
    - Adjusts bounding boxes back to full-page coordinates
    - Outputs: `data/raw/ocr_output.json` with all text blocks
+   - Note: Gemini includes rate limiting (500ms between requests) to avoid API quota issues
 
    **Stage 3: Segmentation (`segment_articles.py`)**
    - Groups text blocks into articles based on proximity and layout
@@ -185,8 +227,10 @@ This will save 4-panel visualization images to `data/preprocessed/{pdf_name}/deb
 │   └── browser.js             # Article search/filter
 ├── scripts/
 │   ├── requirements.txt       # Python dependencies
-│   ├── run_pipeline.py        # Master pipeline runner
-│   ├── process_pdfs.py        # OCR processing
+│   ├── run_pipeline.py        # Master pipeline runner (supports --ocr-engine flag)
+│   ├── preprocess.py          # PDF preprocessing and column detection
+│   ├── process_pdfs.py        # OCR processing (PaddleOCR - local)
+│   ├── process_pdfs_gemini.py # OCR processing (Gemini Vision - cloud)
 │   ├── segment_articles.py    # Article extraction
 │   ├── tag_articles.py        # Content classification
 │   ├── generate_timeline.py   # Timeline generation
@@ -212,8 +256,9 @@ This will save 4-panel visualization images to `data/preprocessed/{pdf_name}/deb
 
 ### Backend/Processing
 - **Python 3.8+**: Data processing
-- **PaddleOCR**: OCR engine
-- **NumPy/OpenCV**: Image processing
+- **PaddleOCR** or **Gemini Vision API**: OCR engines (user-selectable)
+- **NumPy/OpenCV**: Image processing and column detection
+- **pdf2image**: PDF to image conversion
 
 ### Hosting
 - **GitHub Pages**: Static site hosting
@@ -308,7 +353,7 @@ Bibliothèque et Archives nationales du Québec (BAnQ). Digital collections.
 - D3.js for data visualization
 - Scrollama for scrollytelling
 - GSAP for animations
-- PaddleOCR for text extraction
+- PaddleOCR or Gemini Vision API for text extraction
 
 ---
 
