@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """
-Preprocess PDFs: Resize, detect columns, and split into manageable chunks.
-
-Enhanced version with:
-1. Adaptive ROI (Masthead skipping on Page 1)
-2. Hybrid Gutter + Line detection
-3. Scipy-based robust peak detection
+Preprocess PDFs with OpenCV Assertion safeguards.
+- Prevents 'empty source' errors in cvtColor.
+- Shaves gutters safely.
+- Discards fragments under 250KB.
 """
 
 import os
@@ -13,216 +11,191 @@ import json
 import cv2
 import numpy as np
 from pdf2image import convert_from_path
-from PIL import Image
 import argparse
 from pathlib import Path
-import math
-from scipy.signal import find_peaks
 
-def calculate_optimal_dpi(pdf_path, target_mb=4):
-    """Calculate DPI that results in images around target size."""
-    try:
-        test_images = convert_from_path(pdf_path, dpi=100, first_page=1, last_page=1)
-        test_img = test_images[0]
-        width, height = test_img.size
-        pixels = width * height
-        bytes_per_pixel = 3
-        estimated_mb = (pixels * bytes_per_pixel) / (1024 * 1024)
-
-        if estimated_mb > 0:
-            scale_factor = math.sqrt(target_mb / estimated_mb)
-            optimal_dpi = int(100 * scale_factor)
-            optimal_dpi = max(75, min(200, optimal_dpi))
-        else:
-            optimal_dpi = 100
-
-        print(f"  Calculated optimal DPI: {optimal_dpi}")
-        return optimal_dpi
-    except Exception as e:
-        print(f"  Warning: Could not calculate optimal DPI: {e}")
-        return 100
-
-def detect_column_boundaries(image_array, page_num=1, expected_columns=5, debug=False, debug_path=None):
-    """
-    Detect vertical column boundaries using a hybrid of vertical lines and whitespace gutters.
-    """
-    height, width = image_array.shape[:2]
-
-    # 1. Preprocessing
-    if len(image_array.shape) == 3:
-        gray = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
-    else:
-        gray = image_array
-
-    # Binarize: Text/Lines become 255 (white), Background becomes 0 (black)
-    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
-    # 2. Adaptive ROI
-    # Page 1 usually has a large masthead (title). We skip the top ~18%.
-    # Interior pages only need a small margin skip to avoid headers.
-    roi_top = int(height * 0.18) if page_num == 1 else int(height * 0.05)
-    roi_bottom = int(height * 0.98)
-    roi = binary[roi_top:roi_bottom, :]
-
-    # 3. Signal A: Vertical Line Detection (Morphology)
-    # Extracts physical black divider lines
-    line_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 100))
-    line_mask = cv2.morphologyEx(roi, cv2.MORPH_OPEN, line_kernel)
-    line_signal = np.sum(line_mask, axis=0)
-    
-    # 4. Signal B: Gutter Detection (Whitespace)
-    # Smears text horizontally; vertical gaps with 0 pixels are the gutters
-    gutter_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 1))
-    smeared = cv2.dilate(roi, gutter_kernel, iterations=1)
-    gutter_signal = np.sum(smeared, axis=0)
-
-    # 5. Hybrid Scoring
-    # Normalize signals to 0.0 - 1.0
-    line_norm = line_signal / (np.max(line_signal) + 1e-6)
-    # Invert gutter signal (low density = high boundary score)
-    gutter_norm = 1.0 - (gutter_signal / (np.max(gutter_signal) + 1e-6))
-    
-    # Combined score: 70% physical lines, 30% whitespace gutters
-    combined_score = (line_norm * 0.7) + (gutter_norm * 0.3)
-
-    # 6. Peak Detection
-    # distance: Prevents detecting peaks too close together
-    # prominence: Ensures the peak stands out from local noise
-    min_col_width = width // (expected_columns + 2)
-    peaks, _ = find_peaks(combined_score, distance=min_col_width, height=0.1, prominence=0.05)
-
-    # Convert peaks to full-page boundaries
-    boundaries = [0] + sorted(peaks.tolist()) + [width]
-
-    # Debug visualization
-    if debug and debug_path:
-        import matplotlib.pyplot as plt
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10))
+def detect_vertical_columns(image_array, expected_columns=5):
+    # SAFETY: Check if image is valid
+    if image_array is None or image_array.size == 0:
+        return [0]
         
-        # Profile plot
-        ax1.plot(combined_score, label='Hybrid Score', color='purple')
-        ax1.scatter(peaks, combined_score[peaks], color='red', label='Detected Dividers')
-        ax1.set_title(f'Column Detection Profile (Page {page_num})')
-        ax1.legend()
+    h, w = image_array.shape[:2]
+    gray = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
+    binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                   cv2.THRESH_BINARY_INV, 11, 2)
 
-        # Result Overlay
-        display_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        for p in peaks:
-            cv2.line(display_img, (p, 0), (p, height), (0, 0, 255), 3)
-        ax2.imshow(cv2.cvtColor(display_img, cv2.COLOR_BGR2RGB))
-        ax2.set_title('Detected Boundaries')
-        ax2.axis('off')
+    roi = binary[int(h*0.1):int(h*0.9), :]
+    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 150))
+    v_lines = cv2.morphologyEx(roi, cv2.MORPH_OPEN, v_kernel)
+    v_proj = np.sum(v_lines, axis=0)
+    
+    v_norm = v_proj / (np.max(v_proj) + 1e-6)
+    peaks = [x for x in range(1, len(v_norm)-1) if v_norm[x] > 0.1 and v_norm[x] > v_norm[x-1] and v_norm[x] > v_norm[x+1]]
+    
+    clean_peaks = []
+    min_col_w = w // (expected_columns + 2)
+    if peaks:
+        clean_peaks.append(peaks[0])
+        for p in peaks[1:]:
+            if p > clean_peaks[-1] + min_col_w: clean_peaks.append(p)
+            
+    # Remove duplicates and sort
+    bounds = sorted(list(set([0] + clean_peaks + [w])))
+    return bounds
 
-        plt.tight_layout()
-        plt.savefig(debug_path, dpi=150)
-        plt.close()
+def detect_horizontal_rules(column_img, debug_name=None):
+    """
+    Robust horizontal rule detection.
+    Optimized for slightly tilted or faint 19th-century printing rules.
+    """
+    if column_img is None or column_img.size == 0:
+        return [0]
+    
+    h, w = column_img.shape[:2]
+    if h < 100: return [0, h]
 
-    print(f"    Detected {len(boundaries)-1} columns on page {page_num}")
-    return boundaries
+    # 1. Shave margins (essential to remove vertical edge noise)
+    shave = max(1, int(w * 0.05))
+    clean_col = column_img[:, shave:w-shave]
+    cw = clean_col.shape[1]
 
-def split_into_columns(image_array, boundaries, margin=10):
-    """Split image into columns based on detected boundaries."""
-    columns = []
-    height, width = image_array.shape[:2]
+    # 2. Pre-process
+    gray = cv2.cvtColor(clean_col, cv2.COLOR_BGR2GRAY)
+    
+    # Use a very sensitive threshold to catch faint lines
+    binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                   cv2.THRESH_BINARY_INV, 11, 2)
 
-    for i in range(len(boundaries) - 1):
-        x_start = max(0, boundaries[i] - margin)
-        x_end = min(width, boundaries[i + 1] + margin)
-        column_img = image_array[:, x_start:x_end]
+    # 3. Morphology: The "Line Finder"
+    # We use a shorter kernel (35% width) to account for slight page tilt.
+    # We then 'Close' it to bridge the tapered ends.
+    kernel_w = int(cw * 0.15) 
+    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_w, 1))
+    
+    # Remove text
+    detected = cv2.morphologyEx(binary, cv2.MORPH_OPEN, h_kernel)
+    # Bridge the rule segments
+    detected = cv2.morphologyEx(detected, cv2.MORPH_CLOSE, h_kernel, iterations=3)
 
-        metadata = {
-            'column_index': i,
-            'x_offset': x_start,
-            'x_start': boundaries[i],
-            'x_end': boundaries[i + 1],
-            'width': x_end - x_start,
-            'height': height
-        }
-        columns.append((column_img, metadata))
-    return columns
+    # 4. Vertical Projection
+    y_proj = np.sum(detected, axis=1)
+    
+    # Calculate threshold: 25% of the column width is ink-heavy enough for a rule
+    # This is much more forgiving than 40-50%
+    peak_thresh = 255 * cw * 0.15
+    
+    dividers = []
+    y = 10
+    while y < h - 10:
+        if y_proj[y] > peak_thresh:
+            # We found a candidate. Check if it's a rule (thin) or a text block (thick)
+            start_y = y
+            while y < h and y_proj[y] > (peak_thresh * 0.5):
+                y += 1
+            end_y = y
+            
+            # RULE CHECK: If the 'blob' is more than 15 pixels tall, 
+            # it's likely a line of bold text, not a rule. Skip it.
+            if (end_y - start_y) < 15:
+                dividers.append(int((start_y + end_y) / 2))
+        y += 1
 
-def preprocess_pdf(pdf_path, output_dir, dpi=None, debug=False):
-    """Preprocess a single PDF: convert, detect, split, save."""
+    # 5. Clean and Filter
+    min_snip_h = 80 # Min height of an ad/article
+    clean_dividers = []
+    if dividers:
+        dividers = sorted(list(set(dividers)))
+        clean_dividers.append(dividers[0])
+        for d in dividers[1:]:
+            if d > clean_dividers[-1] + min_snip_h:
+                clean_dividers.append(d)
+
+    # --- DEBUG VISUALIZATION ---
+    # If this isn't working, uncomment these lines to see the 'detected' lines
+    # cv2.imwrite(f"debug_lines_{debug_name}.png", detected)
+
+    return sorted(list(set([0] + clean_dividers + [h])))
+
+def preprocess_pdf(pdf_path, output_dir, dpi=150):
     pdf_name = Path(pdf_path).stem
-    if dpi is None:
-        dpi = calculate_optimal_dpi(pdf_path)
-
     images = convert_from_path(pdf_path, dpi=dpi)
     pdf_output_dir = Path(output_dir) / pdf_name
     pdf_output_dir.mkdir(parents=True, exist_ok=True)
 
-    if debug:
-        (pdf_output_dir / 'debug').mkdir(exist_ok=True)
-
-    pdf_metadata = {'source_pdf': pdf_name, 'dpi': dpi, 'num_pages': len(images), 'pages': []}
+    pdf_metadata = {'source_pdf': pdf_name, 'dpi': dpi, 'pages': []}
+    MIN_KB = 250 
 
     for page_num, image in enumerate(images, start=1):
         print(f"  Page {page_num}/{len(images)}...")
-        image_array = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-
-        debug_path = pdf_output_dir / 'debug' / f'p{page_num:03d}_detect.png' if debug else None
+        img_arr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         
-        # Pass page_num to trigger Adaptive ROI
-        boundaries = detect_column_boundaries(
-            image_array, 
-            page_num=page_num, 
-            expected_columns=5, 
-            debug=debug, 
-            debug_path=debug_path
-        )
+        v_bounds = detect_vertical_columns(img_arr)
+        page_snippets = []
 
-        columns = split_into_columns(image_array, boundaries)
-        page_metadata = {'page_num': page_num, 'boundaries': boundaries, 'columns': []}
+        for col_idx in range(len(v_bounds)-1):
+            x1, x2 = v_bounds[col_idx], v_bounds[col_idx+1]
+            # SAFETY: Skip zero-width columns
+            if x2 <= x1: continue
+            
+            column_strip = img_arr[:, x1:x2]
+            h_bounds = detect_horizontal_rules(column_strip)
+            
+            for snip_idx in range(len(h_bounds)-1):
+                y1, y2 = h_bounds[snip_idx], h_bounds[snip_idx+1]
+                # SAFETY: Skip zero-height snippets
+                if y2 <= y1: continue
+                
+                snippet = column_strip[y1:y2, :]
+                
+                # FINAL SAFETY: Ensure snippet exists before cvtColor
+                if snippet is None or snippet.size == 0: continue
+                
+                snippet_gray = cv2.cvtColor(snippet, cv2.COLOR_BGR2GRAY)
+                
+                snip_fn = f"p{page_num:02d}_c{col_idx:02d}_s{snip_idx:03d}.jpg"
+                snip_path = pdf_output_dir / snip_fn
+                cv2.imwrite(str(snip_path), snippet_gray, [int(cv2.IMWRITE_JPEG_QUALITY), 92])
 
-        for column_img, col_meta in columns:
-            col_filename = f"{pdf_name}_p{page_num:03d}_c{col_meta['column_index']:02d}.png"
-            col_path = pdf_output_dir / col_filename
-            cv2.imwrite(str(col_path), column_img)
-            col_meta['filename'] = col_filename
-            col_meta['path'] = str(col_path)
-            page_metadata['columns'].append(col_meta)
+                if os.path.getsize(snip_path) / 1024 < MIN_KB:
+                    os.remove(snip_path)
+                    continue
 
-        pdf_metadata['pages'].append(page_metadata)
+                page_snippets.append({
+                    'path': str(snip_path),
+                    'x_offset': int(x1),
+                    'y_offset': int(y1),
+                    'column': int(col_idx)
+                })
 
-    with open(pdf_output_dir / 'metadata.json', 'w') as f:
-        json.dump(pdf_metadata, f, indent=2)
+        pdf_metadata['pages'].append({'page_num': page_num, 'snippets': page_snippets})
+    
     return pdf_metadata
 
 def main():
-    parser = argparse.ArgumentParser(description='Preprocess PDFs for OCR')
+    parser = argparse.ArgumentParser()
     parser.add_argument('--input-dir', default='pdfs')
     parser.add_argument('--output-dir', default='data/preprocessed')
-    parser.add_argument('--dpi', type=int, default=None)
-    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--dpi', type=int, default=150)
     args = parser.parse_args()
 
     input_dir, output_dir = Path(args.input_dir), Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    
     pdf_files = sorted(input_dir.glob('*.pdf'))
-
-    if not pdf_files:
-        print(f"No PDF files found in {input_dir}")
-        return
-
-    # This list will store metadata for every PDF processed
     all_metadata = []
 
-    for pdf_path in pdf_files:
+    for pdf in pdf_files:
         try:
-            # We capture the returned metadata dictionary
-            metadata = preprocess_pdf(pdf_path, output_dir, args.dpi, debug=args.debug)
+            metadata = preprocess_pdf(pdf, output_dir, args.dpi)
             all_metadata.append(metadata)
         except Exception as e:
-            print(f"  Error processing {pdf_path.name}: {e}")
+            print(f"  Error processing {pdf.name}: {e}")
+            import traceback
+            traceback.print_exc()
 
-    # CRITICAL: Save the master metadata file that Step 2 (OCR) expects
-    combined_metadata_path = output_dir / 'all_metadata.json'
-    with open(combined_metadata_path, 'w') as f:
+    with open(output_dir / 'all_metadata.json', 'w') as f:
         json.dump(all_metadata, f, indent=2)
-
-    print(f"\nPreprocessing complete!")
-    print(f"  Processed {len(all_metadata)} PDFs")
-    print(f"  Master metadata saved to: {combined_metadata_path}")
+    print("\n✓ Preprocessing complete and safely hardened.")
 
 if __name__ == '__main__':
     main()
