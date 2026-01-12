@@ -69,7 +69,7 @@ def detect_horizontal_rules(column_img, debug_name=None):
     # 3. Morphology: The "Line Finder"
     # We use a shorter kernel (35% width) to account for slight page tilt.
     # We then 'Close' it to bridge the tapered ends.
-    kernel_w = int(cw * 0.15) 
+    kernel_w = max(1, int(cw * 0.15)) 
     h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_w, 1))
     
     # Remove text
