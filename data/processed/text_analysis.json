@@ -1,0 +1,24 @@
+{
+  "summary": {
+    "total_articles": 3175,
+    "ripper_news_count": 19
+  },
+  "whitechapel_analysis": {
+    "stats": {
+      "avg_sentence_length": 0,
+      "exclamations_per_article": 0.0,
+      "sensational_words_per_article": 0.0
+    },
+    "top_keywords": [],
+    "top_phrases": []
+  },
+  "general_news_analysis": {
+    "stats": {
+      "avg_sentence_length": 0,
+      "exclamations_per_article": 0.0,
+      "sensational_words_per_article": 0.0
+    },
+    "top_keywords": [],
+    "top_phrases": []
+  }
+}

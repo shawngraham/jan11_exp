@@ -1,0 +1,29 @@
+{
+  "total_articles": 6,
+  "tag_distribution": {
+    "british_empire": 4,
+    "international": 3,
+    "social_cultural": 4,
+    "canadian": 2,
+    "advertisement": 2,
+    "crime_general": 2
+  },
+  "whitechapel_articles": 0,
+  "average_tags_per_article": 2.8333333333333335,
+  "articles_by_primary_tag": {
+    "british_empire": [
+      "article_001",
+      "article_004"
+    ],
+    "canadian": [
+      "article_002",
+      "article_003"
+    ],
+    "social_cultural": [
+      "article_005"
+    ],
+    "crime_general": [
+      "article_006"
+    ]
+  }
+}
