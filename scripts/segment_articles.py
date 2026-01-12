@@ -10,6 +10,16 @@ import json
 import re
 from pathlib import Path
 from collections import defaultdict
+from datetime import datetime
+
+def extract_date_from_filename(filename):
+    """
+    Extract date from PDF filename (e.g., 'equity_1888-10-25.pdf' -> '1888-10-25')
+    """
+    match = re.search(r'(\d{4}[-_]\d{2}[-_]\d{2})', filename)
+    if match:
+        return match.group(1).replace('_', '-')
+    return None
 
 def is_likely_headline(block, avg_height):
     """
@@ -120,12 +130,15 @@ def main():
     # 2. Process each page
     for (pub_name, page_num), blocks in data_by_page.items():
         print(f"Segmenting: {pub_name} - Page {page_num}")
-        
+
+        # Extract date from filename
+        extracted_date = extract_date_from_filename(pub_name)
+
         articles = group_into_articles(blocks)
 
         for art_idx, art in enumerate(articles, 1):
             full_text = " ".join(b["text"] for b in art["blocks"]).strip()
-            
+
             # Calculate aggregate bounding box for the whole article
             all_x = [b["bbox"][0] for b in art["blocks"]]
             all_y = [b["bbox"][1] for b in art["blocks"]]
@@ -134,17 +147,19 @@ def main():
 
             article_entry = {
                 "article_id": f"{pub_name}_p{page_num}_a{art_idx:03d}",
-                "pub": pub_name,
-                "page": page_num,
+                "source_pdf": pub_name,
+                "page_number": page_num,
                 "column": art["column"],
                 "headline": art["headline"],
-                "text": full_text,
+                "full_text": full_text,
                 "word_count": len(full_text.split()),
+                "extracted_date": extracted_date,
+                "date": extracted_date,  # For timeline compatibility
                 "bbox": {
                     "x": min(all_x),
                     "y": min(all_y),
-                    "w": max(all_x_end) - min(all_x),
-                    "h": max(all_y_end) - min(all_y)
+                    "width": max(all_x_end) - min(all_x),
+                    "height": max(all_y_end) - min(all_y)
                 }
             }
             all_articles.append(article_entry)
@@ -152,7 +167,7 @@ def main():
     # 3. Save to JSON
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump({
-            "count": len(all_articles),
+            "total_articles": len(all_articles),
             "articles": all_articles
         }, f, indent=2, ensure_ascii=False)
 

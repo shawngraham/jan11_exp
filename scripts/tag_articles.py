@@ -104,8 +104,10 @@ def main():
 
     for art in articles:
         # Calculate scores based on the text and headline generated in Step 3
-        scores = calculate_tag_scores(art.get("text", ""), art.get("headline", ""))
-        
+        # Use 'full_text' field (new) or fall back to 'text' (old)
+        text = art.get("full_text", art.get("text", ""))
+        scores = calculate_tag_scores(text, art.get("headline", ""))
+
         # Sort tags by score
         assigned = []
         for tag, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
@@ -113,20 +115,22 @@ def main():
                 "tag": tag,
                 "score": round(score, 2)
             })
-        
+
         # Determine metadata
         art["tags"] = assigned
         art["primary_tag"] = assigned[0]["tag"] if assigned else "general"
-        
-        # Specific flag for your interest in 1888 true crime
-        art["is_ripper_related"] = any(t["tag"] == "whitechapel_ripper" for t in assigned)
+
+        # Specific flag for Whitechapel murders (using the field name the JS expects)
+        art["is_whitechapel"] = any(t["tag"] == "whitechapel_ripper" for t in assigned)
+        # Also keep old name for backward compatibility
+        art["is_ripper_related"] = art["is_whitechapel"]
 
     # Save results
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump({"articles": articles}, f, indent=2, ensure_ascii=False)
 
     # Summary Stats
-    ripper_news = sum(1 for a in articles if a["is_ripper_related"])
+    ripper_news = sum(1 for a in articles if a["is_whitechapel"])
     print("-" * 30)
     print(f"Tagging Complete!")
     print(f"Total articles processed: {len(articles)}")

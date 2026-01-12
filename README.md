@@ -79,17 +79,25 @@ which pdfinfo
 
 ### OCR Engine Options
 
-This pipeline supports two OCR engines:
+This pipeline supports three OCR engines:
 
-1. **PaddleOCR (Default)** - Local, open-source OCR
+1. **Tesseract (Default)** - Traditional open-source OCR
+   - Most stable option, especially for Apple Silicon Macs
    - Runs entirely on your machine
    - No API costs
    - Good accuracy for newspaper text
+   - Lower memory footprint than PaddleOCR
+   - Requires Tesseract binary and pytesseract package
+
+2. **PaddleOCR** - Deep learning-based OCR
+   - Runs entirely on your machine
+   - No API costs
+   - Can have better accuracy for some layouts
    - Requires PaddleOCR and PaddlePaddle packages
 
-2. **Gemini Vision API** - Cloud-based OCR by Google
+3. **Gemini Vision API** - Cloud-based OCR by Google
    - Uses Google's Gemini Pro Vision API
-   - Potentially higher accuracy
+   - Potentially highest accuracy
    - Requires API key and incurs usage costs
    - Better at handling complex layouts
    - Requires google-generativeai package
@@ -103,7 +111,8 @@ This pipeline supports two OCR engines:
 - **NumPy**: Numerical operations
 
 **OCR Engine (choose one):**
-- **PaddleOCR + PaddlePaddle**: For local OCR processing (default)
+- **Tesseract + pytesseract**: For traditional OCR processing (default, recommended)
+- **PaddleOCR + PaddlePaddle**: For deep learning-based local OCR processing
 - **google-generativeai**: For Gemini Vision API (cloud-based)
 
 See `scripts/requirements.txt` for version details.
@@ -116,14 +125,19 @@ See `scripts/requirements.txt` for version details.
 
 2. **Choose your OCR engine and run the pipeline:**
 
-   **Option A: PaddleOCR (Default - Local Processing)**
+   **Option A: Tesseract (Default - Stable Local Processing)**
    ```bash
    python3 scripts/run_pipeline.py
    # or explicitly:
+   python3 scripts/run_pipeline.py --ocr-engine tesseract
+   ```
+
+   **Option B: PaddleOCR (Deep Learning - Local Processing)**
+   ```bash
    python3 scripts/run_pipeline.py --ocr-engine paddleocr
    ```
 
-   **Option B: Gemini Vision API (Cloud Processing)**
+   **Option C: Gemini Vision API (Cloud Processing)**
    ```bash
    # First, set your API key:
    export GEMINI_API_KEY="your-api-key-here"
@@ -152,11 +166,12 @@ See `scripts/requirements.txt` for version details.
    - Outputs: `data/preprocessed/{pdf_name}/` with column images and metadata
    - **Debug mode:** Use `--debug` flag to save 4-panel visualization
 
-   **Stage 2: OCR (`process_pdfs.py` or `process_pdfs_gemini.py`)**
+   **Stage 2: OCR (`process_pdfs_tesseract.py`, `process_pdfs.py`, or `process_pdfs_gemini.py`)**
    - Reads preprocessed column images from Stage 1
-   - Runs OCR engine (PaddleOCR or Gemini Vision) on each snippet independently
+   - Runs OCR engine (Tesseract, PaddleOCR, or Gemini Vision) on each snippet independently
    - Adjusts bounding boxes back to full-page coordinates
-   - Outputs: `data/raw/ocr_output.json` with all text blocks
+   - Outputs: `data/raw/ocr_output_tesseract.jsonl` (or `ocr_output.json` for PaddleOCR) with all text blocks
+   - Note: Tesseract outputs JSONL format (one JSON object per line) for streaming
    - Note: Gemini includes rate limiting (500ms between requests) to avoid API quota issues
 
    **Stage 3: Segmentation (`segment_articles.py`)**
@@ -226,15 +241,16 @@ This will save 4-panel visualization images to `data/preprocessed/{pdf_name}/deb
 │   ├── text-viz.js            # Text analysis charts
 │   └── browser.js             # Article search/filter
 ├── scripts/
-│   ├── requirements.txt       # Python dependencies
-│   ├── run_pipeline.py        # Master pipeline runner (supports --ocr-engine flag)
-│   ├── preprocess.py          # PDF preprocessing and column detection
-│   ├── process_pdfs.py        # OCR processing (PaddleOCR - local)
-│   ├── process_pdfs_gemini.py # OCR processing (Gemini Vision - cloud)
-│   ├── segment_articles.py    # Article extraction
-│   ├── tag_articles.py        # Content classification
-│   ├── generate_timeline.py   # Timeline generation
-│   └── analyze_text.py        # Text analysis
+│   ├── requirements.txt          # Python dependencies
+│   ├── run_pipeline.py           # Master pipeline runner (supports --ocr-engine flag)
+│   ├── preprocess.py             # PDF preprocessing and column detection
+│   ├── process_pdfs_tesseract.py # OCR processing (Tesseract - default/stable)
+│   ├── process_pdfs.py           # OCR processing (PaddleOCR - local)
+│   ├── process_pdfs_gemini.py    # OCR processing (Gemini Vision - cloud)
+│   ├── segment_articles.py       # Article extraction
+│   ├── tag_articles.py           # Content classification
+│   ├── generate_timeline.py      # Timeline generation
+│   └── analyze_text.py           # Text analysis
 ├── data/
 │   ├── raw/                   # OCR output
 │   └── processed/             # Structured data files
@@ -256,7 +272,7 @@ This will save 4-panel visualization images to `data/preprocessed/{pdf_name}/deb
 
 ### Backend/Processing
 - **Python 3.8+**: Data processing
-- **PaddleOCR** or **Gemini Vision API**: OCR engines (user-selectable)
+- **Tesseract** (default), **PaddleOCR**, or **Gemini Vision API**: OCR engines (user-selectable)
 - **NumPy/OpenCV**: Image processing and column detection
 - **pdf2image**: PDF to image conversion
 
@@ -353,7 +369,7 @@ Bibliothèque et Archives nationales du Québec (BAnQ). Digital collections.
 - D3.js for data visualization
 - Scrollama for scrollytelling
 - GSAP for animations
-- PaddleOCR or Gemini Vision API for text extraction
+- Tesseract OCR (default), PaddleOCR, or Gemini Vision API for text extraction
 
 ---
 
