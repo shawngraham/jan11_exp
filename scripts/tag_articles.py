@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Automated Article Tagging Script
-Classifies articles based on keyword matching and content analysis
+Classifies articles based on keyword matching and content analysis.
+Fixes field name mismatches and adds word-boundary protection.
 """
 
 import json
@@ -9,299 +10,119 @@ import re
 from pathlib import Path
 from collections import defaultdict
 
-# Tag definitions with keywords
+# Tag definitions
 TAG_KEYWORDS = {
     "whitechapel_ripper": {
         "keywords": [
-            "whitechapel", "jack the ripper", "ripper", "east end murders",
-            "leather apron", "spitalfields", "commercial road", "dorset street",
+            "whitechapel", "jack the ripper", "ripper", "leather apron", 
+            "spitalfields", "hanbury", "mitre square", "buck's row",
             "mary kelly", "annie chapman", "elizabeth stride", "catherine eddowes",
-            "mary nichols", "polly nichols"
+            "mary nichols", "polly nichols", "london monster", "whitechapel fiend"
         ],
-        "patterns": [
-            r"whitechapel.*murder",
-            r"ripper.*case",
-            r"east\s+end.*horror"
-        ],
-        "weight": 10  # High priority tag
+        "weight": 15
     },
     "crime_general": {
         "keywords": [
-            "murder", "murdered", "crime", "criminal", "police", "constable",
-            "arrest", "arrested", "trial", "prisoner", "jail", "gaol",
-            "detective", "investigation", "suspect", "accused", "guilty",
-            "victim", "killing", "theft", "robbery", "burglar"
-        ],
-        "patterns": [
-            r"charge[d]?\s+with",
-            r"found\s+guilty",
-            r"sentenced\s+to"
+            "murder", "slain", "crime", "criminal", "police", "constable",
+            "arrest", "trial", "prisoner", "jail", "gaol", "detective", 
+            "suspect", "accused", "guilty", "theft", "robbery", "burglar", "hanged"
         ],
         "weight": 5
-    },
-    "british_empire": {
-        "keywords": [
-            "london", "england", "britain", "british", "queen victoria",
-            "westminster", "downing street", "house of commons", "house of lords",
-            "scotland yard", "metropolitan police", "thames",
-            "manchester", "liverpool", "birmingham", "glasgow",
-            "india", "colonial office", "empire", "colony", "imperial"
-        ],
-        "patterns": [
-            r"london.*news",
-            r"from\s+london",
-            r"english\s+.*affairs"
-        ],
-        "weight": 6,
-        # Exclude parliament-only references (handled separately)
-        "exclude_if_only": ["parliament", "parliamentary"]
     },
     "local_shawville": {
         "keywords": [
-            "shawville", "pontiac", "ottawa valley", "clarendon",
-            "bristol", "fort coulonge", "campbell's bay", "aylmer",
-            "chapeau", "quyon", "bryson"
+            "shawville", "pontiac", "clarendon", "bristol", "fort coulonge", 
+            "campbell's bay", "aylmer", "chapeau", "quyon", "bryson", "ottawa valley"
         ],
-        "patterns": [
-            r"local\s+news",
-            r"our\s+town",
-            r"in\s+this\s+vicinity"
-        ],
-        "weight": 8
+        "weight": 10
     },
-    "international": {
+    "british_empire": {
         "keywords": [
-            "france", "germany", "russia", "italy", "spain", "austria",
-            "america", "united states", "washington", "new york",
-            "china", "japan", "africa", "australia", "mexico",
-            "paris", "berlin", "moscow", "rome", "vienna"
+            "london", "england", "british", "victoria", "westminster", 
+            "scotland yard", "metropolitan police", "thames", "liverpool", 
+            "glasgow", "empire", "colonial", "imperial"
         ],
-        "patterns": [
-            r"foreign\s+news",
-            r"from\s+abroad",
-            r"cable\s+dispatch"
-        ],
-        "weight": 5
-    },
-    "canadian": {
-        "keywords": [
-            "canada", "canadian", "ottawa", "montreal", "toronto", "quebec",
-            "dominion", "ontario", "macdonald", "laurier", "governor general"
-        ],
-        "patterns": [
-            r"canadian\s+.*news",
-            r"dominion\s+.*affairs"
-        ],
-        "weight": 7
+        "weight": 6
     },
     "advertisement": {
         "keywords": [
             "for sale", "wanted", "notice", "bargain", "price", "cents",
-            "dollar", "cheap", "advertisement", "classified",
-            "buy now", "special offer", "discount"
-        ],
-        "patterns": [
-            r"\$\d+\.\d+",
-            r"apply\s+to",
-            r"inquire\s+at"
+            "dollar", "cheap", "advertisement", "classified", "apply to", "inquire"
         ],
         "weight": 3
-    },
-    "social_cultural": {
-        "keywords": [
-            "church", "sermon", "marriage", "wedding", "funeral", "death",
-            "social", "entertainment", "concert", "lecture", "meeting",
-            "society", "club", "association", "agricultural", "fair"
-        ],
-        "patterns": [
-            r"social\s+event",
-            r"will\s+be\s+held",
-            r"passed\s+away"
-        ],
-        "weight": 4
     }
 }
 
-def normalize_text(text):
-    """Normalize text for matching"""
-    return text.lower().strip()
-
-def calculate_tag_scores(article_text, headline=""):
-    """
-    Calculate confidence scores for each tag
-
-    Returns:
-        Dictionary of tag -> score
-    """
-    combined_text = normalize_text(headline + " " + article_text)
+def calculate_tag_scores(text, headline):
+    """Calculate scores using word boundaries for accuracy."""
+    combined = (headline + " " + text).lower()
     scores = defaultdict(float)
 
     for tag, config in TAG_KEYWORDS.items():
         score = 0
-
-        # Check keywords
-        for keyword in config["keywords"]:
-            keyword_lower = keyword.lower()
-            # Count occurrences, weight by importance
-            count = combined_text.count(keyword_lower)
-            if count > 0:
-                # More weight to headline matches
-                headline_matches = normalize_text(headline).count(keyword_lower)
-                body_matches = count - headline_matches
-                score += (headline_matches * 2) + body_matches
-
-        # Check regex patterns
-        for pattern in config.get("patterns", []):
-            matches = re.findall(pattern, combined_text, re.IGNORECASE)
-            score += len(matches) * 2  # Patterns worth more
-
-        # Apply tag weight
-        score *= config["weight"]
-
-        # Check exclusions
-        if "exclude_if_only" in config:
-            # Only exclude if ONLY those keywords match and nothing else
-            exclude_words = config["exclude_if_only"]
-            has_only_exclude = all(
-                word.lower() in combined_text for word in exclude_words
-            )
-            has_other_keywords = any(
-                kw.lower() in combined_text
-                for kw in config["keywords"]
-                if kw.lower() not in [w.lower() for w in exclude_words]
-            )
-
-            if has_only_exclude and not has_other_keywords:
-                score = 0
-
-        scores[tag] = score
-
+        for kw in config["keywords"]:
+            # Use regex to find whole words only (\b)
+            # This prevents "ripper" matching "stripper"
+            pattern = rf'\b{re.escape(kw.lower())}\b'
+            matches = len(re.findall(pattern, combined))
+            
+            if matches > 0:
+                # Check if keyword is in headline (worth 3x)
+                in_headline = len(re.findall(pattern, headline.lower()))
+                score += (in_headline * 3) + (matches - in_headline)
+        
+        scores[tag] = score * config["weight"]
+    
     return scores
 
-def assign_tags(article):
-    """
-    Assign tags to an article based on content
-
-    Returns:
-        Updated article with tags and confidence scores
-    """
-    text = article.get("full_text", "")
-    headline = article.get("headline", "")
-
-    # Calculate scores
-    scores = calculate_tag_scores(text, headline)
-
-    # Determine primary tags (score > threshold)
-    threshold = 5
-    assigned_tags = []
-
-    for tag, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
-        if score > threshold:
-            assigned_tags.append({
-                "tag": tag,
-                "confidence": min(1.0, score / 50)  # Normalize to 0-1
-            })
-
-    # Always assign at least one tag (highest scoring)
-    if not assigned_tags and scores:
-        best_tag = max(scores.items(), key=lambda x: x[1])
-        assigned_tags.append({
-            "tag": best_tag[0],
-            "confidence": 0.3  # Low confidence
-        })
-
-    # Special handling: mark Whitechapel articles prominently
-    is_whitechapel = any(tag["tag"] == "whitechapel_ripper" for tag in assigned_tags)
-
-    article["tags"] = assigned_tags
-    article["is_whitechapel"] = is_whitechapel
-    article["primary_tag"] = assigned_tags[0]["tag"] if assigned_tags else "unknown"
-
-    return article
-
-def generate_statistics(articles):
-    """Generate statistics about tagged articles"""
-    stats = {
-        "total_articles": len(articles),
-        "tag_distribution": defaultdict(int),
-        "whitechapel_articles": 0,
-        "average_tags_per_article": 0,
-        "articles_by_primary_tag": defaultdict(list)
-    }
-
-    total_tags = 0
-
-    for article in articles:
-        # Count tags
-        for tag_info in article.get("tags", []):
-            stats["tag_distribution"][tag_info["tag"]] += 1
-            total_tags += 1
-
-        # Count Whitechapel
-        if article.get("is_whitechapel"):
-            stats["whitechapel_articles"] += 1
-
-        # Group by primary tag
-        primary = article.get("primary_tag", "unknown")
-        stats["articles_by_primary_tag"][primary].append(article["global_article_id"])
-
-    stats["average_tags_per_article"] = total_tags / len(articles) if articles else 0
-
-    return stats
-
 def main():
-    # Setup paths
-    base_dir = Path(__file__).parent.parent
-    input_file = base_dir / "data" / "processed" / "articles.json"
-    output_file = base_dir / "data" / "processed" / "tagged_articles.json"
-    stats_file = base_dir / "data" / "processed" / "tagging_stats.json"
+    # 1. Path Setup
+    script_dir = Path(__file__).parent
+    project_root = script_dir if (script_dir / "data").exists() else script_dir.parent
+    
+    input_file = project_root / "data" / "processed" / "articles.json"
+    output_file = project_root / "data" / "processed" / "tagged_articles.json"
 
-    # Check if input exists
     if not input_file.exists():
-        print(f"Error: Articles file not found at {input_file}")
-        print("Please run segment_articles.py first.")
+        print(f"Error: {input_file} not found. Run segment_articles.py first.")
         return
 
-    # Load articles
-    print(f"Loading articles from {input_file}...")
+    # 2. Load Data
     with open(input_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
+    
+    articles = data.get("articles", [])
+    print(f"Tagging {len(articles)} articles...")
 
-    articles = data["articles"]
-    print(f"Processing {len(articles)} articles...")
+    # 3. Process
+    for art in articles:
+        # Note: we use art["text"] because that's what segment_articles.py outputs
+        scores = calculate_tag_scores(art.get("text", ""), art.get("headline", ""))
+        
+        # Sort and filter tags
+        assigned = []
+        for tag, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
+            if score > 0:
+                assigned.append({
+                    "tag": tag,
+                    "score": round(score, 2)
+                })
+        
+        art["tags"] = assigned
+        art["primary_tag"] = assigned[0]["tag"] if assigned else "general"
+        art["is_whitechapel"] = any(t["tag"] == "whitechapel_ripper" for t in assigned)
 
-    # Tag each article
-    for i, article in enumerate(articles, 1):
-        assign_tags(article)
-        if i % 50 == 0:
-            print(f"  Tagged {i}/{len(articles)} articles...")
-
-    # Generate statistics
-    stats = generate_statistics(articles)
-
-    # Save results
-    output_data = {
-        "total_articles": len(articles),
-        "articles": articles
-    }
-
+    # 4. Save
     with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(output_data, f, indent=2, ensure_ascii=False)
+        json.dump({"articles": articles}, f, indent=2, ensure_ascii=False)
 
-    with open(stats_file, 'w', encoding='utf-8') as f:
-        json.dump(dict(stats), f, indent=2, default=list)
-
+    # 5. Summary
+    ripper_count = sum(1 for a in articles if a["is_whitechapel"])
     print("=" * 60)
-    print(f"Tagging complete!")
-    print(f"Results saved to {output_file}")
-    print(f"Statistics saved to {stats_file}")
-    print(f"\nSummary:")
-    print(f"  Total articles: {stats['total_articles']}")
-    print(f"  Whitechapel articles: {stats['whitechapel_articles']}")
-    print(f"  Average tags per article: {stats['average_tags_per_article']:.2f}")
-    print(f"\nTag distribution:")
-    for tag, count in sorted(stats['tag_distribution'].items(), key=lambda x: x[1], reverse=True):
-        print(f"    {tag}: {count}")
+    print(f"Tagging Complete!")
+    print(f"  Total articles: {len(articles)}")
+    print(f"  Whitechapel-related: {ripper_count}")
+    print(f"  Results saved to: {output_file}")
 
 if __name__ == "__main__":
     main()
