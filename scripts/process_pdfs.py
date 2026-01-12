@@ -1,76 +1,109 @@
 #!/usr/bin/env python3
 """
-OCR Processing Script for Preprocessed Column Images
-Includes NumpyEncoder to fix JSON serialization errors.
+OCR Processing Script - DocTR (Vision Transformer) Edition
+Reads preprocessed column images and recognizes text using Deep Learning.
 """
 
-import os
 import json
 import sys
 import gc
-from pathlib import Path
+import cv2
 import numpy as np
-import easyocr
+from pathlib import Path
 
-# --- THE FIX: Custom Encoder for NumPy types ---
+# Step 1: Dependencies - requires `pip install python-doctr[torch]`
+try:
+    from doctr.models import ocr_predictor
+    from doctr.io import DocumentFile
+except ImportError:
+    print("Error: DocTR not installed. Run: pip install python-doctr[torch]")
+    sys.exit(1)
+
+# Custom Encoder to handle NumPy types from the OCR model
 class NumpyEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types """
     def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-                            np.int16, np.int32, np.int64, np.uint8,
-                            np.uint16, np.uint32, np.uint64)):
-            return int(obj)
-        elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+        if isinstance(obj, (np.int64, np.int32, np.float32, np.float64)):
             return float(obj)
-        elif isinstance(obj, (np.ndarray,)):
-            return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
-# Initialize EasyOCR reader
-print("Initializing EasyOCR...")
-reader = easyocr.Reader(['en'], gpu=False, verbose=False)
+# Initialize the DocTR model (Vision Transformer)
+# det_arch: 'db_resnet50' (Finds text blocks)
+# reco_arch: 'crnn_vgg16_bn' (Reads the actual characters)
+print("Initializing DocTR Vision Transformer...")
+model = ocr_predictor(det_arch='db_resnet50', reco_arch='crnn_vgg16_bn', pretrained=True)
 
-def process_column_image(image_path, column_metadata):
-    """Run OCR and return blocks with full-page coordinates."""
-    img_p = Path(image_path)
-    if not img_p.exists():
+def resolve_image_path(stored_path, project_root):
+    """
+    Ensures we find the image even if the path in JSON is relative.
+    """
+    p = Path(stored_path)
+    if p.exists():
+        return p
+    # Try relative to project root
+    alt_p = project_root / stored_path
+    if alt_p.exists():
+        return alt_p
+    # Try relative to 'data/preprocessed'
+    alt_p2 = project_root / "data" / "preprocessed" / p.name
+    if alt_p2.exists():
+        return alt_p2
+    return None
+
+def process_column(col_meta, project_root):
+    """
+    Loads a single preprocessed column crop and runs Vision OCR.
+    """
+    img_path = resolve_image_path(col_meta['path'], project_root)
+    if not img_path:
+        print(f"\n      [!] Warning: Could not find image at {col_meta['path']}")
         return []
 
-    x_offset = column_metadata['x_offset']
+    # Load image to get dimensions for coordinate conversion
+    img_cv = cv2.imread(str(img_path))
+    if img_cv is None: return []
+    h_px, w_px = img_cv.shape[:2]
 
-    try:
-        # Using paragraph=True for faster/cleaner newspaper OCR
-        result = reader.readtext(str(img_p), paragraph=True)
-    except Exception as e:
-        print(f" OCR Error: {e}")
-        return []
-
+    # Convert image for DocTR and run prediction
+    doc = DocumentFile.from_images(str(img_path))
+    result = model(doc)
+    
+    # Export results (this structure contains lines and words)
+    # Coordinate system is normalized [0, 1]
+    output = result.export()
+    
     text_blocks = []
-    for detection in result:
-        # EasyOCR with paragraph=True returns (bbox, text)
-        bbox, text = detection
-        
-        # Explicitly convert to standard floats to avoid int64 issues
-        adjusted_bbox = [[float(p[0] + x_offset), float(p[1])] for p in bbox]
-        
-        x_coords = [p[0] for p in adjusted_bbox]
-        y_coords = [p[1] for p in adjusted_bbox]
+    x_offset = col_meta['x_offset']
 
-        text_blocks.append({
-            "text": text,
-            "bbox": {
-                "x": min(x_coords),
-                "y": min(y_coords),
-                "width": max(x_coords) - min(x_coords),
-                "height": max(y_coords) - min(y_coords)
-            },
-            "polygon": adjusted_bbox,
-            "column": int(column_metadata['column_index'])
-        })
+    # Navigate the DocTR output: Page -> Block -> Line
+    for block in output['pages'][0]['blocks']:
+        for line in block['lines']:
+            # Join words in line
+            line_text = " ".join([word['value'] for word in line['words']])
+            
+            # DocTR Geometry: ((ymin, xmin), (ymax, xmax))
+            (ymin, xmin), (ymax, xmax) = line['geometry']
+            
+            # Convert normalized back to Broadhseet Pixels
+            pixel_x = (xmin * w_px) + x_offset
+            pixel_y = (ymin * h_px)
+            pixel_w = (xmax - xmin) * w_px
+            pixel_h = (ymax - ymin) * h_px
+
+            text_blocks.append({
+                "text": line_text,
+                "bbox": {
+                    "x": float(pixel_x),
+                    "y": float(pixel_y),
+                    "width": float(pixel_w),
+                    "height": float(pixel_h)
+                },
+                "column": int(col_meta['column_index'])
+            })
+            
     return text_blocks
 
 def main():
-    # Setup paths
+    # 1. Setup Project Paths
     script_dir = Path(__file__).parent
     project_root = script_dir if (script_dir / "data").exists() else script_dir.parent
     
@@ -78,48 +111,50 @@ def main():
     output_dir = project_root / "data" / "raw"
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # 2. Load the metadata generated by Step 1
     metadata_path = preprocessed_dir / "all_metadata.json"
     if not metadata_path.exists():
-        print(f"Error: Missing {metadata_path}")
-        sys.exit(1)
+        print(f"Error: Run preprocess.py first. Missing: {metadata_path}")
+        return
 
     with open(metadata_path, 'r') as f:
         all_metadata = json.load(f)
 
     all_results = []
+    print(f"Processing {len(all_metadata)} PDFs using Vision Transformer OCR...")
+
     for pdf_meta in all_metadata:
         pdf_name = pdf_meta['source_pdf']
-        print(f"Processing OCR for: {pdf_name}")
+        print(f"\nOCRing: {pdf_name}")
         
-        pdf_data = {"filename": pdf_name, "pages": []}
+        pdf_entry = {"filename": pdf_name, "pages": []}
 
         for page_meta in pdf_meta['pages']:
             print(f"  Page {page_meta['page_num']}...", end="", flush=True)
-            all_text_blocks = []
+            page_text = []
             
+            # Iterate through the preprocessed COLUMN images
             for col_meta in page_meta['columns']:
-                blocks = process_column_image(col_meta['path'], col_meta)
-                all_text_blocks.extend(blocks)
-                gc.collect()
+                blocks = process_column(col_meta, project_root)
+                page_text.extend(blocks)
+                print(".", end="", flush=True) # Progress indicator
+                gc.collect() # Essential: Vision models eat RAM
             
-            pdf_data["pages"].append({
+            pdf_entry["pages"].append({
                 "page_number": int(page_meta['page_num']),
-                "text_blocks": all_text_blocks,
-                "total_blocks": len(all_text_blocks)
+                "text_blocks": page_text,
+                "total_blocks": len(page_text)
             })
-            print(f" Done ({len(all_text_blocks)} blocks)")
+            print(f" Done ({len(page_text)} lines)")
 
-        all_results.append(pdf_data)
+        all_results.append(pdf_entry)
 
-    # Save with the custom encoder
+    # 3. Save the consolidated results for the next pipeline steps
     output_file = output_dir / "ocr_output.json"
     with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump({
-            "pdfs": all_results,
-            "ocr_engine": "EasyOCR (Paragraph Mode)"
-        }, f, indent=2, ensure_ascii=False, cls=NumpyEncoder) # <-- CLS IS KEY
+        json.dump({"pdfs": all_results}, f, indent=2, ensure_ascii=False, cls=NumpyEncoder)
 
-    print(f"\n✓ OCR Output saved to {output_file}")
+    print(f"\n✓ Vision OCR complete. Results saved to {output_file}")
 
 if __name__ == "__main__":
     main()
