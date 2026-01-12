@@ -67,14 +67,17 @@ def main():
         except:
             date_display = date_iso
 
+        # Get the text using new or old field names
+        text = art.get("full_text", art.get("text", ""))
+
         event = {
             "article_id": art["article_id"],
-            "pub": art.get("pub"),
+            "pub": art.get("source_pdf", art.get("pub")),
             "date": date_iso,
             "date_display": date_display,
             "headline": art.get("headline", "Untitled Report"),
-            "snippet": art["text"][:200] + "..." if len(art["text"]) > 200 else art["text"],
-            "page": art.get("page"),
+            "snippet": text[:200] + "..." if len(text) > 200 else text,
+            "page": art.get("page_number", art.get("page")),
             "column": art.get("column"),
             "type": "publication"
         }
@@ -101,8 +104,9 @@ def main():
     timeline_data = {
         "london_canonical_events": LONDON_EVENTS,
         "canadian_reports": sorted(shawville_events, key=lambda x: x['date']),
-        "metadata": {
+        "statistics": {
             "total_matches": len(whitechapel_articles),
+            "total_london_events": len(LONDON_EVENTS),
             "generated_at": datetime.now().isoformat()
         }
     }
