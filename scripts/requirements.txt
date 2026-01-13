@@ -10,5 +10,7 @@ scipy>=1.10.0
 # For local OCR with PaddleOCR:
 paddleocr==3.3.2
 paddlepaddle
+# For local OCR with Surya
+surya-ocr
 # For cloud-based OCR with Gemini Vision API:
 google-generativeai>=0.3.0

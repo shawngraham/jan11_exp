@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Step 1: Preprocess PDFs (300 DPI)
+Step 1: Preprocess PDFs (300 DPI) - Memory Efficient Version
+- Processes ONE PAGE AT A TIME to avoid OOM in Colab
 - Hardened against 'Empty Source' OpenCV errors.
 - Bypasses PIL pixel limits for large broadsheets.
 - Discards snippets < 250KB (white space filter).
@@ -8,6 +9,7 @@ Step 1: Preprocess PDFs (300 DPI)
 
 import os
 import json
+import gc
 import cv2
 import numpy as np
 import re
@@ -17,6 +19,7 @@ from PIL import Image
 
 # 1. BYPASS PILLOW LIMIT
 Image.MAX_IMAGE_PIXELS = None 
+
 
 def detect_vertical_columns(img_gray):
     if img_gray is None or img_gray.size == 0: return [0]
@@ -39,6 +42,7 @@ def detect_vertical_columns(img_gray):
         for p in peaks[1:]:
             if p > clean_peaks[-1] + min_col_w: clean_peaks.append(p)
     return sorted(list(set([0] + clean_peaks + [w])))
+
 
 def detect_horizontal_rules(column_gray):
     """Refined skew-tolerant horizontal detection."""
@@ -72,39 +76,105 @@ def detect_horizontal_rules(column_gray):
         y += 1
     return sorted(list(set([0] + dividers + [h])))
 
+
+def get_pdf_page_count(pdf_path):
+    """Get number of pages without loading the whole PDF."""
+    try:
+        from pdf2image.pdf2image import pdfinfo_from_path
+        info = pdfinfo_from_path(str(pdf_path))
+        return info.get('Pages', 0)
+    except Exception:
+        # Fallback: try loading first page to check
+        try:
+            convert_from_path(str(pdf_path), dpi=72, first_page=1, last_page=1)
+            # If that works, try to get count another way
+            return 10  # Default guess, will stop when no more pages
+        except:
+            return 0
+
+
+def process_single_page(pdf_path, page_num, dpi=300):
+    """Convert a single page from PDF to image."""
+    try:
+        images = convert_from_path(
+            str(pdf_path), 
+            dpi=dpi,
+            first_page=page_num,
+            last_page=page_num
+        )
+        if images:
+            return images[0]
+    except Exception as e:
+        print(f"    Error loading page {page_num}: {e}")
+    return None
+
+
 def main():
-    script_dir = Path(__file__).resolve().parent
-    project_root = script_dir.parent
+    # Detect environment
+    try:
+        from google.colab import drive
+        IN_COLAB = True
+        project_root = Path("/content/jan11_exp")
+        print("Running in Google Colab")
+    except ImportError:
+        IN_COLAB = False
+        script_dir = Path(__file__).resolve().parent
+        project_root = script_dir.parent
+        print("Running locally")
+
     pdf_dir = project_root / "pdfs"
     output_base = project_root / "data" / "preprocessed"
     output_base.mkdir(parents=True, exist_ok=True)
 
     MIN_KB = 250
     DPI = 300
-    MAX_SNIP_HEIGHT = 2000 # PaddleOCR limit is 4000; 3800 is safe.
+    MAX_SNIP_HEIGHT = 2000
 
     pdf_files = sorted(pdf_dir.glob("*.pdf"))
+    print(f"Found {len(pdf_files)} PDFs to process")
+    
     all_metadata = []
 
-    for pdf_path in pdf_files:
+    for pdf_idx, pdf_path in enumerate(pdf_files):
         stem = pdf_path.stem
         match = re.match(r"(\d+)_(\d{4}-\d{2}-\d{2})", stem)
         pub_id, pub_date = match.groups() if match else ("000", "0000-00-00")
 
-        print(f"Processing: {stem}")
-        try:
-            images = convert_from_path(str(pdf_path), dpi=DPI)
-        except Exception as e:
-            print(f"  ERROR: {e}")
-            continue
+        print(f"\n[{pdf_idx+1}/{len(pdf_files)}] Processing: {stem}")
+        
+        # Get page count
+        page_count = get_pdf_page_count(pdf_path)
+        print(f"  Detected {page_count} pages")
 
         pdf_out_dir = output_base / stem
         pdf_out_dir.mkdir(parents=True, exist_ok=True)
         pdf_entry = {"source_pdf": stem, "pub_id": pub_id, "date": pub_date, "pages": []}
 
-        for p_idx, page_img in enumerate(images):
-            page_num = p_idx + 1
+        # Process ONE PAGE AT A TIME
+        page_num = 1
+        consecutive_failures = 0
+        
+        while consecutive_failures < 3:  # Stop after 3 consecutive failures (end of PDF)
+            print(f"  Processing page {page_num}...", end=" ", flush=True)
+            
+            # Load single page
+            page_img = process_single_page(pdf_path, page_num, DPI)
+            
+            if page_img is None:
+                consecutive_failures += 1
+                print("(no page)")
+                page_num += 1
+                continue
+            
+            consecutive_failures = 0  # Reset on success
+            
+            # Convert to grayscale
             img_gray = cv2.cvtColor(np.array(page_img), cv2.COLOR_RGB2GRAY)
+            
+            # Free the PIL image immediately
+            del page_img
+            gc.collect()
+            
             v_bounds = detect_vertical_columns(img_gray)
             page_snippets = []
 
@@ -121,7 +191,7 @@ def main():
                     
                     snip_h = raw_snippet.shape[0]
                     
-                    # --- SPLIT LOGIC FOR LONG COLUMNS ---
+                    # Split logic for long columns
                     num_parts = (snip_h // MAX_SNIP_HEIGHT) + 1
                     
                     for part_idx in range(num_parts):
@@ -132,7 +202,6 @@ def main():
                         
                         snippet_part = raw_snippet[start_y:end_y, :]
                         
-                        # naming includes part suffix: _pt0, _pt1
                         snip_fn = f"{pub_id}_{pub_date}_p{page_num:02d}_c{c_idx:02d}_s{s_idx:03d}_pt{part_idx}.jpg"
                         snip_path = pdf_out_dir / snip_fn
                         
@@ -146,17 +215,34 @@ def main():
                         page_snippets.append({
                             "path": str(snip_path),
                             "x_offset": int(x1),
-                            "y_offset": int(y1 + start_y), # Important: Add chunk offset to global Y
+                            "y_offset": int(y1 + start_y),
                             "column": int(c_idx)
                         })
             
             pdf_entry["pages"].append({"page_num": page_num, "snippets": page_snippets})
-            print(f"  Page {page_num}: {len(page_snippets)} snippets.")
+            print(f"{len(page_snippets)} snippets")
+            
+            # Aggressive cleanup after each page
+            del img_gray
+            gc.collect()
+            
+            page_num += 1
+            
+            # Safety check - don't process more than 100 pages
+            if page_num > 100:
+                print("  (reached 100 page limit)")
+                break
 
         all_metadata.append(pdf_entry)
+        
+        # Save metadata incrementally (in case of crash)
+        with open(output_base / "all_metadata.json", "w") as f:
+            json.dump(all_metadata, f, indent=2)
+        print(f"  Saved metadata ({len(all_metadata)} PDFs processed)")
 
-    with open(output_base / "all_metadata.json", "w") as f:
-        json.dump(all_metadata, f, indent=2)
+    print(f"\nDone! Processed {len(all_metadata)} PDFs")
+    print(f"📁 Output: {output_base / 'all_metadata.json'}")
+
 
 if __name__ == "__main__":
     main()
