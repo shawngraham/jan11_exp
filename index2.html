@@ -649,8 +649,10 @@
                 <button class="network-control-btn active" data-network-filter="all">All Connections</button>
                 <button class="network-control-btn" data-network-filter="whitechapel">Whitechapel Only</button>
                 <button class="network-control-btn" data-network-filter="burke">Burke & Hare</button>
-                <span style="margin-left: auto; color: var(--color-ink-light); font-size: 0.85rem;">
-                    <strong>Tip:</strong> Click nodes to highlight connections, drag to rearrange
+                <button class="network-control-btn" id="reset-zoom-btn" style="margin-left: auto; background: #f0f0f0;">Reset View</button>
+                <button class="network-control-btn" id="download-csv-btn" style="background: var(--color-shawville); color: white;">Download CSV</button>
+                <span style="color: var(--color-ink-light); font-size: 0.85rem; margin-left: 1rem;">
+                    <strong>Tip:</strong> Click nodes to highlight connections, drag to rearrange, scroll to zoom
                 </span>
             </div>
             <div class="network-container">
@@ -713,8 +715,11 @@
         let timelineData = null;
         let articlesData = null;
         let textAnalysisData = null;
+        let entitiesData = null; // Precomputed entities
         let currentFilter = 'whitechapel';
         let locationFilter = null;
+        let currentNetworkData = null; // Store current network data for CSV export
+        let currentSimulation = null; // Store D3 simulation for controls
 
         // Helper: Detect Burke & Hare articles
         function isBurkeHare(article) {
@@ -744,6 +749,15 @@
 
         // Helper: Extract locations mentioned in article
         function extractLocations(article) {
+            // Use precomputed entities if available
+            if (entitiesData && entitiesData.article_entities) {
+                const articleEntities = entitiesData.article_entities[article.article_id];
+                if (articleEntities && articleEntities.places) {
+                    return articleEntities.places;
+                }
+            }
+
+            // Fallback to regex extraction
             const text = (article.full_text || '').toLowerCase();
             const headline = (article.headline || '').toLowerCase();
             const combined = text + ' ' + headline;
@@ -776,6 +790,15 @@
 
         // Helper: Extract person names from article
         function extractPeople(article) {
+            // Use precomputed entities if available
+            if (entitiesData && entitiesData.article_entities) {
+                const articleEntities = entitiesData.article_entities[article.article_id];
+                if (articleEntities && articleEntities.people) {
+                    return articleEntities.people;
+                }
+            }
+
+            // Fallback to regex extraction
             const text = article.full_text || '';
             const headline = article.headline || '';
             const combined = text + ' ' + headline;
@@ -882,9 +905,50 @@
             return { nodes: nodesArray, links: linksArray };
         }
 
+        // Download network as CSV
+        function downloadNetworkCSV() {
+            if (!currentNetworkData || !currentNetworkData.links) {
+                alert('No network data available to download');
+                return;
+            }
+
+            // Build CSV content
+            let csv = 'source,target,type,weight\n';
+            currentNetworkData.links.forEach(link => {
+                const source = typeof link.source === 'object' ? link.source.id : link.source;
+                const target = typeof link.target === 'object' ? link.target.id : link.target;
+                const sourceType = currentNetworkData.nodes.find(n => n.id === source)?.type || 'unknown';
+                const targetType = currentNetworkData.nodes.find(n => n.id === target)?.type || 'unknown';
+                const type = `${sourceType}-${targetType}`;
+                csv += `"${source}","${target}","${type}",${link.value}\n`;
+            });
+
+            // Create download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'people-places-network.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
         // Load data
         async function loadData() {
             try {
+                // Try to load precomputed entities (optional)
+                try {
+                    const entities = await fetch('data/processed/entities.json').then(r => r.json());
+                    entitiesData = entities;
+                    console.log('Loaded precomputed entities:', entitiesData);
+                    console.log('Using NER-based entity extraction');
+                } catch (e) {
+                    console.log('No precomputed entities found, using regex fallback');
+                    entitiesData = null;
+                }
+
                 const [timeline, articles, textAnalysis] = await Promise.all([
                     fetch('data/processed/timeline.json').then(r => r.json()),
                     fetch('data/processed/tagged_articles.json').then(r => r.json()),
@@ -1047,6 +1111,9 @@
             // Build network data
             const { nodes, links } = buildNetworkData(filteredArticles);
 
+            // Store for CSV export
+            currentNetworkData = { nodes, links };
+
             console.log(`Network: ${nodes.length} nodes, ${links.length} links`);
 
             if (nodes.length === 0) {
@@ -1056,8 +1123,23 @@
                     .attr('text-anchor', 'middle')
                     .text('No network data available for this filter')
                     .style('fill', '#999');
+                currentNetworkData = null;
                 return;
             }
+
+            // Create zoom behavior
+            const g = svg.append('g');
+
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Store initial transform for reset
+            const initialTransform = d3.zoomIdentity.translate(0, 0).scale(1);
 
             // Create force simulation
             const simulation = d3.forceSimulation(nodes)
@@ -1066,8 +1148,11 @@
                 .force('center', d3.forceCenter(width / 2, height / 2))
                 .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.count) * 5 + 10));
 
+            // Store simulation for controls
+            currentSimulation = simulation;
+
             // Create link elements
-            const link = svg.append('g')
+            const link = g.append('g')
                 .selectAll('line')
                 .data(links)
                 .join('line')
@@ -1075,7 +1160,7 @@
                 .attr('stroke-width', d => Math.sqrt(d.value) * 0.5);
 
             // Create node elements
-            const node = svg.append('g')
+            const node = g.append('g')
                 .selectAll('circle')
                 .data(nodes)
                 .join('circle')
@@ -1085,7 +1170,7 @@
                 .call(drag(simulation));
 
             // Add labels
-            const label = svg.append('g')
+            const label = g.append('g')
                 .selectAll('text')
                 .data(nodes)
                 .join('text')
@@ -1119,6 +1204,14 @@
                     link.style('opacity', 0.3);
                     label.style('opacity', 1);
                 }
+            });
+
+            // Setup reset zoom button
+            d3.select('#reset-zoom-btn').on('click', function() {
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    initialTransform
+                );
             });
 
             // Add tooltip
@@ -1449,14 +1542,17 @@
         });
 
         // Network filter buttons
-        document.querySelectorAll('.network-control-btn').forEach(btn => {
+        document.querySelectorAll('.network-control-btn[data-network-filter]').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.network-control-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.network-control-btn[data-network-filter]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 const filter = btn.dataset.networkFilter;
                 renderNetwork(filter);
             });
         });
+
+        // CSV download button
+        document.getElementById('download-csv-btn').addEventListener('click', downloadNetworkCSV);
 
         // Initialize
         loadData();
