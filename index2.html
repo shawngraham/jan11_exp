@@ -817,7 +817,12 @@
                 'Last Week', 'Last Night', 'Next Week', 'Next Month',
                 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
                 'January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'
+                'July', 'August', 'September', 'October', 'November', 'December',
+                // Article metadata and common phrases to exclude
+                'Untitled Snippet', 'Article From', 'The Equity', 'Per Cent', 'Last Year',
+                'Next Year', 'This Week', 'This Month', 'This Year', 'Last Month',
+                'Young Man', 'Old Man', 'The Man', 'The Woman', 'The Girl', 'The Boy',
+                'Police Station', 'Post Office', 'City Hall', 'Town Hall', 'Main Street'
             ]);
 
             while ((match = namePattern.exec(combined)) !== null) {
