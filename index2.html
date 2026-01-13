@@ -167,6 +167,16 @@
             background: #fff5f5;
         }
 
+        .article-card.burke-hare {
+            border-color: #8B4513;
+            background: #fff9f0;
+        }
+
+        .article-card.local-violence {
+            border-color: var(--color-shawville);
+            background: #f5fff5;
+        }
+
         .article-card .badge {
             display: inline-block;
             background: var(--color-ripper);
@@ -385,6 +395,36 @@
             </div>
         </div>
 
+        <!-- Crime Comparison -->
+        <div class="section">
+            <h2>Murder Stories in The Equity</h2>
+            <p style="margin-bottom: 2rem; color: var(--color-ink-light);">
+                How did The Equity frame different types of murder coverage?
+            </p>
+            <div class="stats">
+                <div class="stat-box" style="border: 2px solid var(--color-ripper);">
+                    <div class="stat-number" id="stat-whitechapel" style="color: var(--color-ripper);">-</div>
+                    <div class="stat-label">Whitechapel/Ripper<br><small style="font-size: 0.8rem;">London, 1888-1895</small></div>
+                </div>
+                <div class="stat-box" style="border: 2px solid #8B4513;">
+                    <div class="stat-number" id="stat-burke" style="color: #8B4513;">-</div>
+                    <div class="stat-label">Burke & Hare<br><small style="font-size: 0.8rem;">Edinburgh, 1828</small></div>
+                </div>
+                <div class="stat-box" style="border: 2px solid #2F4F4F;">
+                    <div class="stat-number" id="stat-crime">-</div>
+                    <div class="stat-label">General Crime<br><small style="font-size: 0.8rem;">Various locations</small></div>
+                </div>
+                <div class="stat-box" style="border: 2px solid var(--color-shawville);">
+                    <div class="stat-number" id="stat-local-violence" style="color: var(--color-shawville);">-</div>
+                    <div class="stat-label">Local Violence<br><small style="font-size: 0.8rem;">Shawville/Pontiac</small></div>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem; padding: 1rem; background: #fff9e6; border-left: 4px solid #8B4513; border-radius: 4px;">
+                <strong>October 25, 1888:</strong> The Equity ran 7 articles about Burke & Hare (Edinburgh body snatchers, 1828)
+                during the height of the Ripper murders. Historical horror alongside contemporary terror.
+            </div>
+        </div>
+
         <!-- Timeline -->
         <div class="section">
             <h2>Timeline: London to Shawville</h2>
@@ -397,9 +437,11 @@
         <div class="section">
             <h2>The Articles</h2>
             <div class="filters">
-                <button class="filter-btn active" data-filter="whitechapel">Whitechapel Only</button>
+                <button class="filter-btn active" data-filter="whitechapel">Whitechapel/Ripper</button>
+                <button class="filter-btn" data-filter="burke">Burke & Hare</button>
+                <button class="filter-btn" data-filter="crime">General Crime</button>
+                <button class="filter-btn" data-filter="local-violence">Local Violence</button>
                 <button class="filter-btn" data-filter="all">All Articles</button>
-                <button class="filter-btn" data-filter="1890s">1890-1895</button>
             </div>
             <div class="article-grid" id="articles">
                 <div class="loading">Loading articles...</div>
@@ -423,6 +465,32 @@
         let timelineData = null;
         let articlesData = null;
         let currentFilter = 'whitechapel';
+
+        // Helper: Detect Burke & Hare articles
+        function isBurkeHare(article) {
+            const text = article.full_text?.toLowerCase() || '';
+            const headline = article.headline?.toLowerCase() || '';
+            // Must mention both Burke AND Hare, or have body snatcher context
+            return ((text.includes('burke') && text.includes('hare')) ||
+                    (headline.includes('burke') || headline.includes('hare')) ||
+                    (text.includes('body') && text.includes('snatcher')));
+        }
+
+        // Helper: Detect local violence
+        function isLocalViolence(article) {
+            const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
+            const isLocal = article.tags?.some(t => t.tag === 'local_shawville');
+            const text = article.full_text?.toLowerCase() || '';
+            const violenceKeywords = ['murder', 'kill', 'assault', 'attack', 'shot', 'stabbed', 'beaten'];
+            return !isWhitechapel && isLocal && violenceKeywords.some(k => text.includes(k));
+        }
+
+        // Helper: Detect general crime
+        function isGeneralCrime(article) {
+            const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
+            if (isWhitechapel || isBurkeHare(article)) return false;
+            return article.tags?.some(t => t.tag === 'crime_general');
+        }
 
         // Load data
         async function loadData() {
@@ -450,6 +518,10 @@
         // Render statistics
         function renderStats() {
             const whitechapelArticles = articlesData.filter(a => a.is_whitechapel || a.is_ripper_related);
+            const burkeHareArticles = articlesData.filter(isBurkeHare);
+            const crimeArticles = articlesData.filter(isGeneralCrime);
+            const localViolenceArticles = articlesData.filter(isLocalViolence);
+
             const pages = new Set(whitechapelArticles.map(a => `${a.source_pdf}_p${a.page_number}`)).size;
             const avgDelay = timelineData.shawville_events.reduce((sum, e) => sum + e.time_lag_days, 0) / timelineData.shawville_events.length;
 
@@ -457,6 +529,12 @@
             document.getElementById('stat-shawville').textContent = timelineData.shawville_events.length;
             document.getElementById('stat-pages').textContent = pages;
             document.getElementById('stat-days').textContent = Math.round(avgDelay);
+
+            // Crime comparison stats
+            document.getElementById('stat-whitechapel').textContent = whitechapelArticles.length;
+            document.getElementById('stat-burke').textContent = burkeHareArticles.length;
+            document.getElementById('stat-crime').textContent = crimeArticles.length;
+            document.getElementById('stat-local-violence').textContent = localViolenceArticles.length;
         }
 
         // Render timeline
@@ -579,11 +657,12 @@
             // Apply filter
             if (currentFilter === 'whitechapel') {
                 filtered = articlesData.filter(a => a.is_whitechapel || a.is_ripper_related);
-            } else if (currentFilter === '1890s') {
-                filtered = articlesData.filter(a => {
-                    const year = parseInt(a.date?.substring(0, 4));
-                    return year >= 1890 && year <= 1895;
-                });
+            } else if (currentFilter === 'burke') {
+                filtered = articlesData.filter(isBurkeHare);
+            } else if (currentFilter === 'crime') {
+                filtered = articlesData.filter(isGeneralCrime);
+            } else if (currentFilter === 'local-violence') {
+                filtered = articlesData.filter(isLocalViolence);
             }
 
             // Sort by date
@@ -592,10 +671,26 @@
             let html = '';
             filtered.forEach(article => {
                 const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
+                const isBH = isBurkeHare(article);
+                const isLV = isLocalViolence(article);
+
+                let badgeHtml = '';
+                let cardClass = '';
+                if (isWhitechapel) {
+                    badgeHtml = '<div class="badge" style="background: var(--color-ripper);">Whitechapel/Ripper</div>';
+                    cardClass = 'whitechapel';
+                } else if (isBH) {
+                    badgeHtml = '<div class="badge" style="background: #8B4513;">Burke & Hare</div>';
+                    cardClass = 'burke-hare';
+                } else if (isLV) {
+                    badgeHtml = '<div class="badge" style="background: var(--color-shawville);">Local Violence</div>';
+                    cardClass = 'local-violence';
+                }
+
                 html += `
-                    <div class="article-card ${isWhitechapel ? 'whitechapel' : ''}"
+                    <div class="article-card ${cardClass}"
                          data-id="${article.article_id}">
-                        ${isWhitechapel ? '<div class="badge">Whitechapel</div>' : ''}
+                        ${badgeHtml}
                         <h3>${article.headline || 'Untitled'}</h3>
                         <div class="meta">
                             ${article.date || 'Unknown date'} |
