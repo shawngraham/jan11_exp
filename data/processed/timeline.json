@@ -1,69 +1,85 @@
 {
-  "london_canonical_events": [
+  "statistics": {
+    "total_matches": 19,
+    "total_london_events": 7,
+    "generated_at": "2026-01-12T17:59:45.678202"
+  },
+  "london_events": [
     {
       "id": "lon_01",
       "date": "1888-08-31",
       "title": "Mary Ann Nichols",
       "location": "Buck's Row",
-      "type": "murder"
+      "type": "murder",
+      "description": "First canonical victim found in Buck's Row"
     },
     {
       "id": "lon_02",
       "date": "1888-09-08",
       "title": "Annie Chapman",
       "location": "Hanbury Street",
-      "type": "murder"
+      "type": "murder",
+      "description": "Second canonical victim found in Hanbury Street"
     },
     {
       "id": "lon_03",
       "date": "1888-09-27",
       "title": "'Dear Boss' Letter",
       "location": "London",
-      "type": "event"
+      "type": "event",
+      "description": "Famous letter signed 'Jack the Ripper' received"
     },
     {
       "id": "lon_04",
       "date": "1888-09-30",
       "title": "Double Event (Stride/Eddowes)",
       "location": "Whitechapel",
-      "type": "murder"
+      "type": "murder",
+      "description": "Two murders in one night: Elizabeth Stride and Catherine Eddowes"
     },
     {
       "id": "lon_05",
       "date": "1888-10-01",
       "title": "'Saucy Jacky' Postcard",
       "location": "London",
-      "type": "event"
+      "type": "event",
+      "description": "Postcard received claiming credit for the 'double event'"
     },
     {
       "id": "lon_06",
       "date": "1888-10-16",
       "title": "Lusk 'From Hell' Letter",
       "location": "London",
-      "type": "event"
+      "type": "event",
+      "description": "Letter with preserved kidney sent to George Lusk"
     },
     {
       "id": "lon_07",
       "date": "1888-11-09",
       "title": "Mary Jane Kelly",
       "location": "Miller's Court",
-      "type": "murder"
+      "type": "murder",
+      "description": "Final canonical victim, found in Miller's Court"
     }
   ],
-  "canadian_reports": [
+  "shawville_events": [
     {
       "article_id": "83471_1890-01-09_p6_a031",
       "pub": "83471_1890-01-09",
       "date": "1890-01-09",
       "date_display": "Jan 09, 1890",
       "headline": "Untitled Snippet",
-      "snippet": "Lord Eegland sa aeley U this coe March. Yamous | London Timea, the Deo, From 9. Wolseley Lord evening On deliv. Saturday Hal), | Toynbee Whitechapel, leotare ered at a nae pte River sl “Red the large ...",
+      "snippet": "Lord Eegland sa aeley U this coe March. Yamous | London Timea, the Deo, From 9. Wolseley Lord evening On deliv. Saturday Hal), | Toynbee Whitechapel, leotare ered at a nae pte River sl \u201cRed the large ...",
       "page": 6,
       "column": 5,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 426,
-      "historical_context": "Reported 426 days after the Mary Jane Kelly."
+      "historical_context": "Reported 426 days after the Mary Jane Kelly.",
+      "title": "Untitled Snippet",
+      "time_lag_days": 426,
+      "description": "Lord Eegland sa aeley U this coe March. Yamous | London Timea, the Deo, From 9. Wolseley Lord evenin... Reported 426 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1890-01-09_p6_a032",
@@ -77,7 +93,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 426,
-      "historical_context": "Reported 426 days after the Mary Jane Kelly."
+      "historical_context": "Reported 426 days after the Mary Jane Kelly.",
+      "title": "**I",
+      "time_lag_days": 426,
+      "description": "**I told replied; have rort vv your cath w gv take and Garry, that | you may we shall finish From ge... Reported 426 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1891-02-26_p2_a033",
@@ -85,13 +105,17 @@
       "date": "1891-02-26",
       "date_display": "Feb 26, 1891",
       "headline": "Untitled Snippet",
-      "snippet": "Frome Latest of use = Le eSitua- | Squabble—Immense The Irish London— the on How Murders Such Whitechapel the as — | Possible—Gossip Horror About are Pope Leo, the to | nraven Now that bring attempt a...",
+      "snippet": "Frome Latest of use = Le eSitua- | Squabble\u2014Immense The Irish London\u2014 the on How Murders Such Whitechapel the as \u2014 | Possible\u2014Gossip Horror About are Pope Leo, the to | nraven Now that bring attempt a...",
       "page": 2,
       "column": 6,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 839,
-      "historical_context": "Reported 839 days after the Mary Jane Kelly."
+      "historical_context": "Reported 839 days after the Mary Jane Kelly.",
+      "title": "Untitled Snippet",
+      "time_lag_days": 839,
+      "description": "Frome Latest of use = Le eSitua- | Squabble\u2014Immense The Irish London\u2014 the on How Murders Such Whitec... Reported 839 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1891-02-26_p2_a037",
@@ -99,13 +123,17 @@
       "date": "1891-02-26",
       "date_display": "Feb 26, 1891",
       "headline": "DOW-",
-      "snippet": "DOW- | perial that the will be allowedto matter ey er, re- The! in its unsatisfactory present main state, | perial Mr, Parnell much is annoyed atthe unfair the) which in his have opponents manner | ‘a...",
+      "snippet": "DOW- | perial that the will be allowedto matter ey er, re- The! in its unsatisfactory present main state, | perial Mr, Parnell much is annoyed atthe unfair the) which in his have opponents manner | \u2018a...",
       "page": 2,
       "column": 6,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 839,
-      "historical_context": "Reported 839 days after the Mary Jane Kelly."
+      "historical_context": "Reported 839 days after the Mary Jane Kelly.",
+      "title": "DOW-",
+      "time_lag_days": 839,
+      "description": "DOW- | perial that the will be allowedto matter ey er, re- The! in its unsatisfactory present main s... Reported 839 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1891-05-07_p2_a009",
@@ -119,7 +147,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 909,
-      "historical_context": "Reported 909 days after the Mary Jane Kelly."
+      "historical_context": "Reported 909 days after the Mary Jane Kelly.",
+      "title": "SHIP",
+      "time_lag_days": 909,
+      "description": "SHIP VUriin wrecked OF was the Lincolnshire night. Tuesday coast on The and the masts cut were were ... Reported 909 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1894-03-22_p2_a023",
@@ -127,13 +159,17 @@
       "date": "1894-03-22",
       "date_display": "Mar 22, 1894",
       "headline": "Untitled Snippet",
-      "snippet": "th of Discovery Possible The Fiend. Whitechapol Lunati Hopeless Man is The Suspected a Ree- Asylam—Laborious Broadmoor in Gab Lile—fils Past ord fis of Arrest: Whea Remark its—Sicnificant Held Was He ...",
+      "snippet": "th of Discovery Possible The Fiend. Whitechapol Lunati Hopeless Man is The Suspected a Ree- Asylam\u2014Laborious Broadmoor in Gab Lile\u2014fils Past ord fis of Arrest: Whea Remark its\u2014Sicnificant Held Was He ...",
       "page": 2,
       "column": 4,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 1959,
-      "historical_context": "Reported 1959 days after the Mary Jane Kelly."
+      "historical_context": "Reported 1959 days after the Mary Jane Kelly.",
+      "title": "Untitled Snippet",
+      "time_lag_days": 1959,
+      "description": "th of Discovery Possible The Fiend. Whitechapol Lunati Hopeless Man is The Suspected a Ree- Asylam\u2014L... Reported 1959 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1894-03-22_p2_a025",
@@ -147,7 +183,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 1959,
-      "historical_context": "Reported 1959 days after the Mary Jane Kelly."
+      "historical_context": "Reported 1959 days after the Mary Jane Kelly.",
+      "title": "HIS",
+      "time_lag_days": 1959,
+      "description": "HIS was bed; it in day He of the spent most seemed he that night only when rous. came Then life, in ... Reported 1959 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1894-03-22_p2_a027",
@@ -161,7 +201,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 1959,
-      "historical_context": "Reported 1959 days after the Mary Jane Kelly."
+      "historical_context": "Reported 1959 days after the Mary Jane Kelly.",
+      "title": "MARVELLOUS",
+      "time_lag_days": 1959,
+      "description": "MARVELLOUS A murders such committed had A who man been have Whitechapel in those must as of simplici... Reported 1959 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1894-03-22_p2_a029",
@@ -169,13 +213,17 @@
       "date": "1894-03-22",
       "date_display": "Mar 22, 1894",
       "headline": "HIS",
-      "snippet": "HIS Ripper” the ‘‘Jack identified The as man is he which asylum in committed the to was been having after incarcerated present at London before brought up on a different girls stabbing of six charge o...",
+      "snippet": "HIS Ripper\u201d the \u2018\u2018Jack identified The as man is he which asylum in committed the to was been having after incarcerated present at London before brought up on a different girls stabbing of six charge o...",
       "page": 2,
       "column": 4,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 1959,
-      "historical_context": "Reported 1959 days after the Mary Jane Kelly."
+      "historical_context": "Reported 1959 days after the Mary Jane Kelly.",
+      "title": "HIS",
+      "time_lag_days": 1959,
+      "description": "HIS Ripper\u201d the \u2018\u2018Jack identified The as man is he which asylum in committed the to was been having ... Reported 1959 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1894-03-22_p2_a031",
@@ -183,13 +231,17 @@
       "date": "1894-03-22",
       "date_display": "Mar 22, 1894",
       "headline": "SIGNIFICANT",
-      "snippet": "SIGNIFICANT A made arrested he he When most a was Is this,” he said, observation, significant ‘‘ End I the public- Mile job? the mean I Syndicate where the just house next They took be that time. miss...",
+      "snippet": "SIGNIFICANT A made arrested he he When most a was Is this,\u201d he said, observation, significant \u2018\u2018 End I the public- Mile job? the mean I Syndicate where the just house next They took be that time. miss...",
       "page": 2,
       "column": 4,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 1959,
-      "historical_context": "Reported 1959 days after the Mary Jane Kelly."
+      "historical_context": "Reported 1959 days after the Mary Jane Kelly.",
+      "title": "SIGNIFICANT",
+      "time_lag_days": 1959,
+      "description": "SIGNIFICANT A made arrested he he When most a was Is this,\u201d he said, observation, significant \u2018\u2018 End... Reported 1959 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1894-03-22_p2_a035",
@@ -203,7 +255,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 1959,
-      "historical_context": "Reported 1959 days after the Mary Jane Kelly."
+      "historical_context": "Reported 1959 days after the Mary Jane Kelly.",
+      "title": "Untitled Snippet",
+      "time_lag_days": 1959,
+      "description": "nn | whom His father separated from his mother, ) said have he treated badly. In is to the J} of fat... Reported 1959 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1894-03-22_p2_a037",
@@ -217,7 +273,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 1959,
-      "historical_context": "Reported 1959 days after the Mary Jane Kelly."
+      "historical_context": "Reported 1959 days after the Mary Jane Kelly.",
+      "title": "THE",
+      "time_lag_days": 1959,
+      "description": "THE IN of the Sun representatives to went Two Lunatic Asylum io Criminal Broadmoor that inscru- with... Reported 1959 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1895-05-16_p3_a015",
@@ -225,13 +285,17 @@
       "date": "1895-05-16",
       "date_display": "May 16, 1895",
       "headline": "NEW",
-      "snippet": "NEW writers have utterly wh« so wrong gone they approached detectives an | their work is the like that police here 4 shroud their manifold operations my teries. Among officials, the Chi excepting Supe...",
+      "snippet": "NEW writers have utterly wh\u00ab so wrong gone they approached detectives an | their work is the like that police here 4 shroud their manifold operations my teries. Among officials, the Chi excepting Supe...",
       "page": 3,
       "column": 1,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 2379,
-      "historical_context": "Reported 2379 days after the Mary Jane Kelly."
+      "historical_context": "Reported 2379 days after the Mary Jane Kelly.",
+      "title": "NEW",
+      "time_lag_days": 2379,
+      "description": "NEW writers have utterly wh\u00ab so wrong gone they approached detectives an | their work is the like th... Reported 2379 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1895-05-16_p3_a048",
@@ -239,13 +303,17 @@
       "date": "1895-05-16",
       "date_display": "May 16, 1895",
       "headline": "LONDON,",
-      "snippet": "LONDON, IN disappearing violence fro are London. Highway robberies—or “‘garro' t| robberies,” called—amount they | as are fifty both for about only the city year a an Burglaries infrequent coupty. are...",
+      "snippet": "LONDON, IN disappearing violence fro are London. Highway robberies\u2014or \u201c\u2018garro' t| robberies,\u201d called\u2014amount they | as are fifty both for about only the city year a an Burglaries infrequent coupty. are...",
       "page": 3,
       "column": 3,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 2379,
-      "historical_context": "Reported 2379 days after the Mary Jane Kelly."
+      "historical_context": "Reported 2379 days after the Mary Jane Kelly.",
+      "title": "LONDON,",
+      "time_lag_days": 2379,
+      "description": "LONDON, IN disappearing violence fro are London. Highway robberies\u2014or \u201c\u2018garro' t| robberies,\u201d called... Reported 2379 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1895-10-03_p2_a022",
@@ -259,7 +327,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 2519,
-      "historical_context": "Reported 2519 days after the Mary Jane Kelly."
+      "historical_context": "Reported 2519 days after the Mary Jane Kelly.",
+      "title": "FARMS",
+      "time_lag_days": 2519,
+      "description": "FARMS York retused IN interview used he fully give New it, with lazily, & yawned to lordly lion any ... Reported 2519 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1895-10-03_p2_a027",
@@ -267,13 +339,17 @@
       "date": "1895-10-03",
       "date_display": "Oct 03, 1895",
       "headline": "THE",
-      "snippet": "THE his fellow physicians, that be) it wasa woman, and ‘Ripper’ to labourers proved and may the halting-places connection between public Nothing regh new, a was desoribed belag of murderer The a9 wes ...",
+      "snippet": "THE his fellow physicians, that be) it wasa woman, and \u2018Ripper\u2019 to labourers proved and may the halting-places connection between public Nothing regh new, a was desoribed belag of murderer The a9 wes ...",
       "page": 2,
       "column": 1,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 2519,
-      "historical_context": "Reported 2519 days after the Mary Jane Kelly."
+      "historical_context": "Reported 2519 days after the Mary Jane Kelly.",
+      "title": "THE",
+      "time_lag_days": 2519,
+      "description": "THE his fellow physicians, that be) it wasa woman, and \u2018Ripper\u2019 to labourers proved and may the halt... Reported 2519 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1895-10-03_p2_a028",
@@ -287,7 +363,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 2519,
-      "historical_context": "Reported 2519 days after the Mary Jane Kelly."
+      "historical_context": "Reported 2519 days after the Mary Jane Kelly.",
+      "title": "ROT",
+      "time_lag_days": 2519,
+      "description": "ROT | | | | boasted first allotments frequently holding defluite his unscientific He of ony Scotland... Reported 2519 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1895-10-03_p2_a031",
@@ -301,7 +381,11 @@
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 2519,
-      "historical_context": "Reported 2519 days after the Mary Jane Kelly."
+      "historical_context": "Reported 2519 days after the Mary Jane Kelly.",
+      "title": "RIPPER.",
+      "time_lag_days": 2519,
+      "description": "RIPPER. prosperous wearer farm the Reported 2519 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     },
     {
       "article_id": "83471_1895-10-03_p2_a035",
@@ -309,18 +393,17 @@
       "date": "1895-10-03",
       "date_display": "Oct 03, 1895",
       "headline": "THE",
-      "snippet": "THE most lodging by house keeper, whom he a with aloft. andowpers stumbling with the block great f ! hon Dr. Winal hat Rg in the world be good the countries too to may | about as lived before. This “T...",
+      "snippet": "THE most lodging by house keeper, whom he a with aloft. andowpers stumbling with the block great f ! hon Dr. Winal hat Rg in the world be good the countries too to may | about as lived before. This \u201cT...",
       "page": 2,
       "column": 1,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 2519,
-      "historical_context": "Reported 2519 days after the Mary Jane Kelly."
+      "historical_context": "Reported 2519 days after the Mary Jane Kelly.",
+      "title": "THE",
+      "time_lag_days": 2519,
+      "description": "THE most lodging by house keeper, whom he a with aloft. andowpers stumbling with the block great f !... Reported 2519 days after the Mary Jane Kelly.",
+      "related_london_event": "lon_07"
     }
-  ],
-  "statistics": {
-    "total_matches": 19,
-    "total_london_events": 7,
-    "generated_at": "2026-01-12T17:59:45.678202"
-  }
+  ]
 }
