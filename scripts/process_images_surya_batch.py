@@ -109,12 +109,16 @@ def process_batch(
             y_off = meta['y_offset']
             
             for text_line in pred.text_lines:
-                # Surya bbox is (x1, y1, x2, y2)
+                # Surya bbox is (x1, y1, x2, y2) format
+                # Convert to [x, y, width, height] to match PaddleOCR output
                 bbox = text_line.bbox
+                x1, y1, x2, y2 = bbox[0], bbox[1], bbox[2], bbox[3]
                 
-                # Global mapping - use top-left corner + offset
-                real_x = bbox[0] + x_off
-                real_y = bbox[1] + y_off
+                # Apply offsets to get global coordinates
+                real_x = x1 + x_off
+                real_y = y1 + y_off
+                width = x2 - x1
+                height = y2 - y1
                 
                 entry = {
                     "pub": pdf_name,
@@ -122,7 +126,7 @@ def process_batch(
                     "col": column,
                     "text": text_line.text.strip(),
                     "conf": round(float(text_line.confidence), 4),
-                    "bbox": [int(real_x), int(real_y)]
+                    "bbox": [int(real_x), int(real_y), int(width), int(height)]
                 }
                 entries.append(entry)
         
