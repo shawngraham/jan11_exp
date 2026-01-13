@@ -42,6 +42,24 @@
     color: var(--color-ink-faded);
 }
 
+.newspaper-page-stats {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--color-ink);
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.newspaper-page-stats .whitechapel-count {
+    color: var(--color-ripper);
+    font-weight: 600;
+}
+
+.newspaper-page-stats .total-count {
+    color: var(--color-ink-light);
+    font-weight: 500;
+}
+
 /* SVG Container for Article Layout */
 .newspaper-page-content {
     position: relative;
