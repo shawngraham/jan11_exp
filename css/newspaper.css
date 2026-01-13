@@ -165,20 +165,87 @@
     font-family: var(--font-body);
 }
 
+#modal-body .article-header {
+    position: relative;
+    margin-bottom: var(--spacing-md);
+}
+
 #modal-body .article-headline {
     font-family: var(--font-display);
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: var(--spacing-sm);
-    border-bottom: 2px solid var(--color-ripper);
+    border-bottom: 2px solid var(--color-ink-light);
     padding-bottom: var(--spacing-xs);
 }
 
+#modal-body .whitechapel-article .article-headline {
+    border-bottom-color: var(--color-ripper);
+}
+
+#modal-body .whitechapel-badge {
+    display: inline-block;
+    background: var(--color-ripper);
+    color: var(--color-paper);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 3px;
+    margin-top: 0.5rem;
+}
+
 #modal-body .article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
     font-size: 0.9rem;
     color: var(--color-ink-light);
     margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-paper-dark);
+}
+
+#modal-body .meta-item {
+    white-space: nowrap;
+}
+
+#modal-body .article-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+}
+
+/* Article Image */
+#modal-body .article-image-container {
+    display: none; /* Hidden by default, shown via JS if image loads */
+    background: var(--color-paper-dark);
+    padding: var(--spacing-sm);
+    border-radius: 4px;
+    text-align: center;
+}
+
+#modal-body .article-snippet-image {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--color-ink-light);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#modal-body .image-caption {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
     font-style: italic;
+    color: var(--color-ink-faded);
+}
+
+/* Article Text Section */
+#modal-body .article-text-section h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-ink);
 }
 
 #modal-body .article-text {
@@ -186,6 +253,13 @@
     line-height: 1.8;
     text-align: justify;
     hyphens: auto;
+    background: var(--color-paper);
+    padding: var(--spacing-md);
+    border-left: 3px solid var(--color-ink-light);
+}
+
+#modal-body .whitechapel-article .article-text {
+    border-left-color: var(--color-ripper);
 }
 
 #modal-body .article-tags {
@@ -208,6 +282,21 @@
 #modal-body .tag.whitechapel_ripper {
     background: var(--color-ripper);
     color: var(--color-paper);
+}
+
+#modal-body .article-source {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-paper-dark);
+    text-align: center;
+    color: var(--color-ink-faded);
+}
+
+/* Layout when image is present */
+@media (min-width: 768px) {
+    #modal-body .article-content:has(.article-image-container[style*="display: block"]) {
+        grid-template-columns: 350px 1fr;
+    }
 }
 
 /* Newspaper texture overlay */

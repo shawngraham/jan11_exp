@@ -153,21 +153,64 @@ function renderArticleModal(article) {
         `<span class="tag ${t.tag}">${t.tag.replace(/_/g, ' ')}</span>`
     ).join('');
 
+    // Format date nicely
+    const displayDate = article.extracted_date ? formatDate(article.extracted_date) : 'Unknown date';
+
+    // Check if article is Whitechapel-related
+    const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
+    const headerClass = isWhitechapel ? 'whitechapel-article' : '';
+
+    // Construct potential image path for snippet
+    // Format: data/preprocessed/{pdf_name}/{article_id}.jpg
+    const imagePath = `data/preprocessed/${article.source_pdf}/${article.article_id}.jpg`;
+
+    // Image section (will show if image exists, hide if not)
+    const imageSection = `
+        <div class="article-image-container">
+            <img src="${imagePath}"
+                 alt="Newspaper snippet: ${article.headline || 'Article'}"
+                 class="article-snippet-image"
+                 onerror="this.parentElement.style.display='none';"
+                 onload="this.parentElement.style.display='block';">
+            <p class="image-caption">Original newspaper snippet</p>
+        </div>
+    `;
+
     const content = `
-        <div class="article-full">
-            <h2 class="article-headline">
-                ${article.headline || 'Article from The Equity'}
-            </h2>
+        <div class="article-full ${headerClass}">
+            <div class="article-header">
+                <h2 class="article-headline">
+                    ${article.headline || 'Article from The Equity'}
+                </h2>
+                ${isWhitechapel ? '<span class="whitechapel-badge">Whitechapel/Ripper Content</span>' : ''}
+            </div>
+
             <div class="article-meta">
-                <strong>Source:</strong> ${article.source_pdf || 'Unknown'} |
-                <strong>Page:</strong> ${article.page_number || 'Unknown'} |
-                <strong>Date:</strong> ${article.extracted_date || 'Unknown'}
+                <span class="meta-item"><strong>Date:</strong> ${displayDate}</span>
+                <span class="meta-item"><strong>Page:</strong> ${article.page_number || 'Unknown'}</span>
+                <span class="meta-item"><strong>Column:</strong> ${article.column || 'Unknown'}</span>
+                <span class="meta-item"><strong>Words:</strong> ${article.word_count || 'Unknown'}</span>
             </div>
-            <div class="article-text">
-                ${article.full_text}
+
+            <div class="article-content">
+                ${imageSection}
+
+                <div class="article-text-section">
+                    <h3>OCR Transcription</h3>
+                    <div class="article-text">
+                        ${article.full_text}
+                    </div>
+                </div>
             </div>
-            <div class="article-tags">
-                <strong>Tags:</strong> ${tags}
+
+            ${tags ? `
+                <div class="article-tags">
+                    <strong>Tags:</strong> ${tags}
+                </div>
+            ` : ''}
+
+            <div class="article-source">
+                <small>Source: ${article.source_pdf || 'Unknown'} | Article ID: ${article.article_id}</small>
             </div>
         </div>
     `;
