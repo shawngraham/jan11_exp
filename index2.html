@@ -339,6 +339,89 @@
             color: var(--color-ink-light);
         }
 
+        /* Word Cloud */
+        .word-cloud {
+            text-align: center;
+            padding: 2rem;
+            line-height: 2.5;
+        }
+
+        .word-cloud span {
+            display: inline-block;
+            margin: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--color-ink);
+        }
+
+        .word-cloud span:hover {
+            color: var(--color-ripper);
+            transform: scale(1.1);
+        }
+
+        /* Geographic Map */
+        .geo-map {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .location-box {
+            background: white;
+            border-radius: 6px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .location-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .location-box.london { border-left: 4px solid var(--color-ripper); }
+        .location-box.edinburgh { border-left: 4px solid #8B4513; }
+        .location-box.shawville { border-left: 4px solid var(--color-shawville); }
+        .location-box.international { border-left: 4px solid var(--color-london); }
+        .location-box.canadian { border-left: 4px solid #DC143C; }
+
+        .location-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--color-ink);
+        }
+
+        .location-count {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--color-ripper);
+            margin: 0.5rem 0;
+        }
+
+        .location-desc {
+            font-size: 0.85rem;
+            color: var(--color-ink-light);
+            font-style: italic;
+        }
+
+        .location-bar {
+            height: 8px;
+            background: var(--color-paper-dark);
+            border-radius: 4px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .location-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-ripper), #d4af37);
+            transition: width 0.6s ease;
+        }
+
         /* Tooltip */
         .tooltip {
             position: absolute;
@@ -425,6 +508,28 @@
             </div>
         </div>
 
+        <!-- Word Cloud -->
+        <div class="section">
+            <h2>Language of Horror</h2>
+            <p style="margin-bottom: 1rem; color: var(--color-ink-light);">
+                Most frequent words in Whitechapel/Ripper articles (hover to see frequency)
+            </p>
+            <div class="word-cloud" id="word-cloud">
+                <div class="loading">Loading word cloud...</div>
+            </div>
+        </div>
+
+        <!-- Geographic Map -->
+        <div class="section">
+            <h2>Geography of News</h2>
+            <p style="margin-bottom: 1rem; color: var(--color-ink-light);">
+                Where did The Equity's stories originate? Click a location to filter articles.
+            </p>
+            <div class="geo-map" id="geo-map">
+                <div class="loading">Analyzing locations...</div>
+            </div>
+        </div>
+
         <!-- Timeline -->
         <div class="section">
             <h2>Timeline: London to Shawville</h2>
@@ -464,7 +569,9 @@
         // Global state
         let timelineData = null;
         let articlesData = null;
+        let textAnalysisData = null;
         let currentFilter = 'whitechapel';
+        let locationFilter = null;
 
         // Helper: Detect Burke & Hare articles
         function isBurkeHare(article) {
@@ -492,21 +599,58 @@
             return article.tags?.some(t => t.tag === 'crime_general');
         }
 
+        // Helper: Extract locations mentioned in article
+        function extractLocations(article) {
+            const text = (article.full_text || '').toLowerCase();
+            const headline = (article.headline || '').toLowerCase();
+            const combined = text + ' ' + headline;
+
+            const locations = [];
+            const locationPatterns = {
+                'London': /\blondon\b/i,
+                'Whitechapel': /\bwhitechapel\b/i,
+                'Edinburgh': /\bedinburgh\b/i,
+                'Paris': /\bparis\b/i,
+                'United States': /\bunited states\b/i,
+                'England': /\bengland\b/i,
+                'Scotland': /\bscotland\b/i,
+                'Ireland': /\bireland\b/i,
+                'Ottawa': /\bottawa\b/i,
+                'Toronto': /\btoronto\b/i,
+                'Montreal': /\bmontreal\b/i,
+                'Quebec': /\bquebec\b/i,
+                'Shawville': /\bshawville\b/i
+            };
+
+            for (const [location, pattern] of Object.entries(locationPatterns)) {
+                if (pattern.test(combined)) {
+                    locations.push(location);
+                }
+            }
+
+            return locations;
+        }
+
         // Load data
         async function loadData() {
             try {
-                const [timeline, articles] = await Promise.all([
+                const [timeline, articles, textAnalysis] = await Promise.all([
                     fetch('data/processed/timeline.json').then(r => r.json()),
-                    fetch('data/processed/tagged_articles.json').then(r => r.json())
+                    fetch('data/processed/tagged_articles.json').then(r => r.json()),
+                    fetch('data/processed/text_analysis.json').then(r => r.json())
                 ]);
 
                 timelineData = timeline;
                 articlesData = articles.articles;
+                textAnalysisData = textAnalysis;
 
                 console.log('Loaded timeline:', timeline);
                 console.log('Loaded articles:', articlesData.length);
+                console.log('Loaded text analysis:', textAnalysis);
 
                 renderStats();
+                renderWordCloud();
+                renderGeoMap();
                 renderTimeline();
                 renderArticles();
             } catch (error) {
@@ -535,6 +679,101 @@
             document.getElementById('stat-burke').textContent = burkeHareArticles.length;
             document.getElementById('stat-crime').textContent = crimeArticles.length;
             document.getElementById('stat-local-violence').textContent = localViolenceArticles.length;
+        }
+
+        // Render word cloud
+        function renderWordCloud() {
+            const container = document.getElementById('word-cloud');
+
+            // Get top 40 words from word cloud data
+            const words = textAnalysisData.word_cloud_data.slice(0, 40);
+
+            // Calculate font size range
+            const maxSize = words[0].size;
+            const minSize = words[words.length - 1].size;
+
+            let html = '';
+            words.forEach(word => {
+                // Scale font size from 0.8rem to 2.5rem
+                const scale = (word.size - minSize) / (maxSize - minSize);
+                const fontSize = 0.8 + (scale * 1.7);
+                const opacity = 0.5 + (scale * 0.5);
+
+                html += `<span style="font-size: ${fontSize}rem; opacity: ${opacity};"
+                              title="${word.text}: ${word.size} occurrences">${word.text}</span>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Render geographic map
+        function renderGeoMap() {
+            const container = document.getElementById('geo-map');
+
+            // Count articles by location
+            const locationCounts = {};
+            articlesData.forEach(article => {
+                const locations = extractLocations(article);
+                locations.forEach(loc => {
+                    locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+                });
+            });
+
+            // Sort and group key locations
+            const keyLocations = [
+                { name: 'London/Whitechapel', key: 'london', desc: 'Ripper murders & British news',
+                  count: (locationCounts['London'] || 0) + (locationCounts['Whitechapel'] || 0) },
+                { name: 'Edinburgh', key: 'edinburgh', desc: 'Burke & Hare historical murders',
+                  count: locationCounts['Edinburgh'] || 0 },
+                { name: 'Shawville', key: 'shawville', desc: 'Local Pontiac County news',
+                  count: locationCounts['Shawville'] || 0 },
+                { name: 'United States', key: 'international', desc: 'American news & events',
+                  count: locationCounts['United States'] || 0 },
+                { name: 'Canadian Cities', key: 'canadian', desc: 'Ottawa, Montreal, Toronto, Quebec',
+                  count: (locationCounts['Ottawa'] || 0) + (locationCounts['Montreal'] || 0) +
+                         (locationCounts['Toronto'] || 0) + (locationCounts['Quebec'] || 0) }
+            ];
+
+            const maxCount = Math.max(...keyLocations.map(l => l.count));
+
+            let html = '';
+            keyLocations.forEach(location => {
+                const percentage = (location.count / maxCount) * 100;
+                html += `
+                    <div class="location-box ${location.key}" data-location="${location.name}">
+                        <div class="location-name">${location.name}</div>
+                        <div class="location-count">${location.count}</div>
+                        <div class="location-desc">${location.desc}</div>
+                        <div class="location-bar">
+                            <div class="location-bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Add click handlers to filter by location
+            document.querySelectorAll('.location-box').forEach(box => {
+                box.addEventListener('click', () => {
+                    const location = box.dataset.location;
+                    filterByLocation(location);
+                });
+            });
+        }
+
+        // Filter articles by location
+        function filterByLocation(location) {
+            locationFilter = location;
+            currentFilter = 'location';
+
+            // Update filter button display
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+
+            renderArticles();
+
+            // Scroll to articles section
+            document.getElementById('articles').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // Render timeline
@@ -663,12 +902,36 @@
                 filtered = articlesData.filter(isGeneralCrime);
             } else if (currentFilter === 'local-violence') {
                 filtered = articlesData.filter(isLocalViolence);
+            } else if (currentFilter === 'location' && locationFilter) {
+                filtered = articlesData.filter(a => {
+                    const locations = extractLocations(a);
+                    // Handle grouped locations
+                    if (locationFilter === 'London/Whitechapel') {
+                        return locations.includes('London') || locations.includes('Whitechapel');
+                    } else if (locationFilter === 'Canadian Cities') {
+                        return locations.some(l => ['Ottawa', 'Montreal', 'Toronto', 'Quebec'].includes(l));
+                    } else {
+                        return locations.includes(locationFilter);
+                    }
+                });
             }
 
             // Sort by date
             filtered.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
-            let html = '';
+            // Add filter heading
+            let filterHeading = '';
+            if (currentFilter === 'location' && locationFilter) {
+                filterHeading = `<p style="margin-bottom: 1rem; color: var(--color-ripper); font-weight: bold;">
+                    Showing ${filtered.length} articles mentioning: ${locationFilter}
+                    <button onclick="currentFilter='whitechapel'; locationFilter=null; renderArticles();"
+                            style="margin-left: 1rem; padding: 0.5rem 1rem; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 4px;">
+                        Clear filter
+                    </button>
+                </p>`;
+            }
+
+            let html = filterHeading;
             filtered.forEach(article => {
                 const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
                 const isBH = isBurkeHare(article);
@@ -722,6 +985,17 @@
 
             const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
             const imagePath = `data/preprocessed/${article.source_pdf}/${article.article_id}.jpg`;
+            const locations = extractLocations(article);
+
+            // Format locations as badges
+            let locationBadges = '';
+            if (locations.length > 0) {
+                locationBadges = '<div style="margin: 1rem 0;"><strong>Locations mentioned:</strong> ';
+                locations.forEach(loc => {
+                    locationBadges += `<span style="display: inline-block; background: #e8e8e8; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 3px; font-size: 0.85rem;">${loc}</span>`;
+                });
+                locationBadges += '</div>';
+            }
 
             body.innerHTML = `
                 ${isWhitechapel ? '<div class="badge" style="margin-bottom: 1rem;">Whitechapel/Ripper Content</div>' : ''}
@@ -732,6 +1006,7 @@
                     <strong>Column:</strong> ${article.column} |
                     <strong>Words:</strong> ${article.word_count}
                 </div>
+                ${locationBadges}
                 <img src="${imagePath}"
                      alt="Article snippet"
                      style="max-width: 100%; margin: 1rem 0; display: none;"
