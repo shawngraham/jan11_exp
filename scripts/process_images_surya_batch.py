@@ -7,9 +7,12 @@ Step 2: Robust Streaming OCR using Surya with Batch Processing
 - Uses Surya OCR engine for better accuracy on historical documents
 """
 
+# Fix CUDA memory fragmentation - MUST be before torch import
+import os
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
 import json
 import gc
-import os
 import numpy as np
 from pathlib import Path
 from PIL import Image
@@ -24,10 +27,11 @@ from surya.detection import DetectionPredictor
 # =============================================================================
 
 # Batch size for GPU processing
-# - Colab Free (T4, 15GB VRAM): try 16-32
-# - Colab Pro (A100, 40GB VRAM): try 64-128
-# - Each batch item uses ~40MB VRAM for recognition
-BATCH_SIZE = 16
+# - Colab Free (T4, 15GB VRAM): 4-8 (conservative for large newspaper images)
+# - Colab Pro (A100, 40GB VRAM): 16-32
+# - M1 Mac: 4-8
+# Note: Large historical newspaper snippets use MORE memory than typical images
+BATCH_SIZE = 4
 
 # Set to True to see progress for each image in batch
 VERBOSE = True
@@ -121,9 +125,22 @@ def process_batch(
                     "bbox": [int(real_x), int(real_y)]
                 }
                 entries.append(entry)
+        
+        # Clear predictions from memory
+        del predictions
                 
     except Exception as e:
         print(f"  Batch processing error: {e}")
+    
+    finally:
+        # Always try to clean up GPU memory after batch
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except:
+            pass
+        gc.collect()
     
     return entries
 
@@ -277,14 +294,15 @@ def main():
                     batch_images = []
                     batch_metadata = []
                     
-                    # Force garbage collection
+                    # Aggressive memory cleanup
                     gc.collect()
                     
-                    # Optional: clear CUDA cache if using GPU
+                    # Clear CUDA cache
                     try:
                         import torch
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
+                            torch.cuda.synchronize()  # Wait for all CUDA ops to complete
                     except ImportError:
                         pass
 
