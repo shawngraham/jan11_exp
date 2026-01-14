@@ -2,7 +2,7 @@
   "statistics": {
     "total_matches": 19,
     "total_london_events": 7,
-    "generated_at": "2026-01-12T17:59:45.678202"
+    "generated_at": "2026-01-13T19:36:55.671225"
   },
   "london_events": [
     {
@@ -64,12 +64,12 @@
   ],
   "shawville_events": [
     {
-      "article_id": "83471_1890-01-09_p6_a031",
+      "article_id": "83471_1890-01-09_p6_a040",
       "pub": "83471_1890-01-09",
       "date": "1890-01-09",
       "date_display": "Jan 09, 1890",
       "headline": "Untitled Snippet",
-      "snippet": "Lord Eegland sa aeley U this coe March. Yamous | London Timea, the Deo, From 9. Wolseley Lord evening On deliv. Saturday Hal), | Toynbee Whitechapel, leotare ered at a nae pte River sl \u201cRed the large ...",
+      "snippet": "Lord Wolseley Lectures in England Upon Lord Eegland sa aeley U this coe this Famous March. March. Yamous | London Timea, From the London Times, Dec. 9. the Deo, From 9. Wolseley Lord On Saturday eveni...",
       "page": 6,
       "column": 5,
       "type": "publication",
@@ -78,16 +78,16 @@
       "historical_context": "Reported 426 days after the Mary Jane Kelly.",
       "title": "Untitled Snippet",
       "time_lag_days": 426,
-      "description": "Lord Eegland sa aeley U this coe March. Yamous | London Timea, the Deo, From 9. Wolseley Lord evenin... Reported 426 days after the Mary Jane Kelly.",
+      "description": "Lord Wolseley Lectures in England Upon Lord Eegland sa aeley U this coe this Famous March. March. Ya... Reported 426 days after the Mary Jane Kelly.",
       "related_london_event": "lon_07"
     },
     {
-      "article_id": "83471_1890-01-09_p6_a032",
+      "article_id": "83471_1890-01-09_p6_a041",
       "pub": "83471_1890-01-09",
       "date": "1890-01-09",
       "date_display": "Jan 09, 1890",
       "headline": "**I",
-      "snippet": "**I told replied; have rort vv your cath w gv take and Garry, that | you may we shall finish From get start the to the only had stimulant drop of men was a and not man was Lord lost. Wolesley tea, a r...",
+      "snippet": "**I told replied; have rort vv your cath w gv take and Garry, that | you may we shall get there.\" From start to finish the shall finish From get start the to only stimulant the men had was a drop of t...",
       "page": 6,
       "column": 5,
       "type": "publication",
@@ -96,16 +96,16 @@
       "historical_context": "Reported 426 days after the Mary Jane Kelly.",
       "title": "**I",
       "time_lag_days": 426,
-      "description": "**I told replied; have rort vv your cath w gv take and Garry, that | you may we shall finish From ge... Reported 426 days after the Mary Jane Kelly.",
+      "description": "**I told replied; have rort vv your cath w gv take and Garry, that | you may we shall get there.\" Fr... Reported 426 days after the Mary Jane Kelly.",
       "related_london_event": "lon_07"
     },
     {
-      "article_id": "83471_1891-02-26_p2_a033",
+      "article_id": "83471_1891-02-26_p2_a043",
       "pub": "83471_1891-02-26",
       "date": "1891-02-26",
       "date_display": "Feb 26, 1891",
       "headline": "Untitled Snippet",
-      "snippet": "Frome Latest of use = Le eSitua- | Squabble\u2014Immense The Irish London\u2014 the on How Murders Such Whitechapel the as \u2014 | Possible\u2014Gossip Horror About are Pope Leo, the to | nraven Now that bring attempt a...",
+      "snippet": "Latest Frcm. Europe E. Frome Latest use of of use = Le esitua-<br>on the eSitua- The Irish Squabble-Immense London- | Squabble\u2014Immense The Irish London\u2014 the on How Such Murders as the Whitechapel How ...",
       "page": 2,
       "column": 6,
       "type": "publication",
@@ -114,16 +114,16 @@
       "historical_context": "Reported 839 days after the Mary Jane Kelly.",
       "title": "Untitled Snippet",
       "time_lag_days": 839,
-      "description": "Frome Latest of use = Le eSitua- | Squabble\u2014Immense The Irish London\u2014 the on How Murders Such Whitec... Reported 839 days after the Mary Jane Kelly.",
+      "description": "Latest Frcm. Europe E. Frome Latest use of of use = Le esitua-<br>on the eSitua- The Irish Squabble-... Reported 839 days after the Mary Jane Kelly.",
       "related_london_event": "lon_07"
     },
     {
-      "article_id": "83471_1891-02-26_p2_a037",
+      "article_id": "83471_1891-02-26_p2_a047",
       "pub": "83471_1891-02-26",
       "date": "1891-02-26",
       "date_display": "Feb 26, 1891",
       "headline": "DOW-",
-      "snippet": "DOW- | perial that the will be allowedto matter ey er, re- The! in its unsatisfactory present main state, | perial Mr, Parnell much is annoyed atthe unfair the) which in his have opponents manner | \u2018a...",
+      "snippet": "DOW- | perial perial ever, that the matter will be allowed to re- that the will be allowedto matter ey er, re- The The! main in its present unsatisfactory state. in its unsatisfactory present main sta...",
       "page": 2,
       "column": 6,
       "type": "publication",
@@ -132,25 +132,25 @@
       "historical_context": "Reported 839 days after the Mary Jane Kelly.",
       "title": "DOW-",
       "time_lag_days": 839,
-      "description": "DOW- | perial that the will be allowedto matter ey er, re- The! in its unsatisfactory present main s... Reported 839 days after the Mary Jane Kelly.",
+      "description": "DOW- | perial perial ever, that the matter will be allowed to re- that the will be allowedto matter ... Reported 839 days after the Mary Jane Kelly.",
       "related_london_event": "lon_07"
     },
     {
-      "article_id": "83471_1891-05-07_p2_a009",
+      "article_id": "83471_1891-05-07_p2_a013",
       "pub": "83471_1891-05-07",
       "date": "1891-05-07",
       "date_display": "May 07, 1891",
-      "headline": "SHIP",
-      "snippet": "SHIP VUriin wrecked OF was the Lincolnshire night. Tuesday coast on The and the masts cut were were away, crew rescued by the lifeboat Wednesday. on In the the Work- Camberwell at census house, London...",
+      "headline": "TANCE ALLERS TO ALLERS TO COLORS OF THE PARTY OF THE COLORS",
+      "snippet": "TANCE ALLERS TO ALLERS TO COLORS OF THE PARTY OF THE COLORS charged charged with being the perpetrator of the with being the of the perpetrator last Whitechapel murder, was sentenced to Whitechapel mu...",
       "page": 2,
       "column": 0,
       "type": "publication",
       "correlated_event": "Mary Jane Kelly",
       "days_since_event": 909,
       "historical_context": "Reported 909 days after the Mary Jane Kelly.",
-      "title": "SHIP",
+      "title": "TANCE ALLERS TO ALLERS TO COLORS OF THE PARTY OF THE COLORS",
       "time_lag_days": 909,
-      "description": "SHIP VUriin wrecked OF was the Lincolnshire night. Tuesday coast on The and the masts cut were were ... Reported 909 days after the Mary Jane Kelly.",
+      "description": "TANCE ALLERS TO ALLERS TO COLORS OF THE PARTY OF THE COLORS charged charged with being the perpetrat... Reported 909 days after the Mary Jane Kelly.",
       "related_london_event": "lon_07"
     },
     {
