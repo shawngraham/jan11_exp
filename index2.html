@@ -432,49 +432,61 @@
             color: var(--color-ink-light);
         }
 
-        /* Word Cloud */
-        .word-cloud {
-            text-align: center;
-            padding: 3rem 2rem;
-            line-height: 3;
-            background: linear-gradient(135deg, #fdfbf7 0%, #f9f6ef 100%);
+        /* Term Timeline */
+        .term-timeline-container {
+            margin: 2rem 0;
+            background: white;
+            padding: 1.5rem;
             border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .word-cloud span {
-            display: inline-block;
-            margin: 0.75rem;
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--color-ink);
-            font-family: 'Playfair Display', serif;
-            font-weight: 600;
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .word-cloud span::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background: var(--color-ripper);
-            transition: all 0.3s;
-            transform: translateX(-50%);
-        }
-
-        .word-cloud span:hover {
-            color: var(--color-ripper);
-            transform: scale(1.15) translateY(-2px);
-            text-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
-        }
-
-        .word-cloud span:hover::before {
+        .term-timeline-svg {
             width: 100%;
+            height: 400px;
+            font-family: 'Crimson Text', serif;
         }
+
+        .term-timeline-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            font-family: 'Crimson Text', serif;
+        }
+
+        .term-timeline-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .term-timeline-legend-color {
+            width: 20px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .term-area {
+            transition: opacity 0.3s;
+        }
+
+        .term-area:hover {
+            opacity: 1 !important;
+            stroke: var(--color-ink);
+            stroke-width: 1.5px;
+        }
+
+        .term-murder { fill: var(--color-ripper); opacity: 0.8; }
+        .term-police { fill: #4169E1; opacity: 0.7; }
+        .term-crime { fill: #8B4513; opacity: 0.7; }
+        .term-woman { fill: #9370DB; opacity: 0.7; }
+        .term-death { fill: #2F4F4F; opacity: 0.7; }
+        .term-victim { fill: #DC143C; opacity: 0.7; }
+        .term-whitechapel { fill: #8B0000; opacity: 0.7; }
+        .term-burke { fill: #D2691E; opacity: 0.7; }
 
         /* Geographic Map */
         .geo-map {
@@ -948,14 +960,16 @@
             </div>
         </div>
 
-        <!-- Word Cloud -->
+        <!-- Term Timeline -->
         <div class="section">
-            <h2>The Language of Horror</h2>
+            <h2>The Language of Violence Over Time</h2>
             <p style="margin-bottom: 1.5rem; color: var(--color-ink-light); font-style: italic; font-size: 1.1rem;">
-                What words defined the Ripper coverage? These are the most frequent terms from Whitechapel articles—hover to see how many times each appeared.
+                How did the vocabulary of violence evolve in The Equity? This streamgraph tracks key terms across all articles from 1888-1895,
+                revealing how coverage of murder, crime, and justice waxed and waned over the years.
             </p>
-            <div class="word-cloud" id="word-cloud">
-                <div class="loading">Loading word cloud...</div>
+            <div class="term-timeline-container">
+                <svg id="term-timeline-svg" class="term-timeline-svg"></svg>
+                <div class="term-timeline-legend" id="term-timeline-legend"></div>
             </div>
         </div>
 
@@ -1417,7 +1431,7 @@ You can write freely here. Your notes are automatically saved to your browser.">
                 console.log('Loaded text analysis:', textAnalysis);
 
                 renderStats();
-                renderWordCloud();
+                renderTermTimeline();
                 renderGeoMap();
                 renderNetwork('all');
                 renderSpaceInvasion();
@@ -1450,29 +1464,160 @@ You can write freely here. Your notes are automatically saved to your browser.">
             document.getElementById('stat-local-violence').textContent = localViolenceArticles.length;
         }
 
-        // Render word cloud
-        function renderWordCloud() {
-            const container = document.getElementById('word-cloud');
+        // Render term timeline (streamgraph)
+        function renderTermTimeline() {
+            const svg = d3.select('#term-timeline-svg');
+            const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+            const width = svg.node().getBoundingClientRect().width;
+            const height = 400;
 
-            // Get top 50 words from word cloud data
-            const words = textAnalysisData.word_cloud_data.slice(0, 50);
+            svg.selectAll('*').remove();
 
-            // Calculate font size range
-            const maxSize = words[0].size;
-            const minSize = words[words.length - 1].size;
+            // Define key terms to track across ALL articles
+            const trackedTerms = {
+                'murder': /\bmurders?\b/gi,
+                'police': /\bpolice\b/gi,
+                'crime': /\bcrimes?\b/gi,
+                'woman': /\bwom[ae]n\b/gi,
+                'death': /\bdeaths?\b/gi,
+                'victim': /\bvictims?\b/gi,
+                'whitechapel': /\bwhitechapel\b/gi,
+                'burke': /\bburke\b/gi
+            };
 
-            let html = '';
-            words.forEach(word => {
-                // Scale font size from 0.9rem to 3.5rem with more dramatic variation
-                const scale = (word.size - minSize) / (maxSize - minSize);
-                const fontSize = 0.9 + (scale * 2.6);
-                const opacity = 0.6 + (scale * 0.4);
+            // Count term occurrences by month across ALL articles
+            const monthlyTerms = d3.rollup(
+                articlesData,
+                articles => {
+                    const counts = {};
+                    Object.keys(trackedTerms).forEach(term => {
+                        counts[term] = 0;
+                        articles.forEach(article => {
+                            const text = `${article.title} ${article.transcription || ''}`.toLowerCase();
+                            const matches = text.match(trackedTerms[term]);
+                            counts[term] += matches ? matches.length : 0;
+                        });
+                    });
+                    return counts;
+                },
+                d => {
+                    const date = new Date(d.date);
+                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                }
+            );
 
-                html += `<span style="font-size: ${fontSize}rem; opacity: ${opacity};"
-                              title="${word.text}: ${word.size} occurrences">${word.text}</span>`;
-            });
+            // Convert to array and sort by date
+            const timelineData = Array.from(monthlyTerms, ([month, counts]) => ({
+                month: month,
+                date: new Date(month + '-01'),
+                ...counts
+            })).sort((a, b) => a.date - b.date);
 
-            container.innerHTML = html;
+            // Filter to only months with at least some coverage
+            const filteredData = timelineData.filter(d =>
+                Object.keys(trackedTerms).some(term => d[term] > 0)
+            );
+
+            // Create scales
+            const x = d3.scaleTime()
+                .domain(d3.extent(filteredData, d => d.date))
+                .range([margin.left, width - margin.right]);
+
+            // Find max total for y scale
+            const maxTotal = d3.max(filteredData, d =>
+                Object.keys(trackedTerms).reduce((sum, term) => sum + d[term], 0)
+            );
+
+            const y = d3.scaleLinear()
+                .domain([0, maxTotal])
+                .range([height - margin.bottom, margin.top]);
+
+            // Create stack
+            const stack = d3.stack()
+                .keys(Object.keys(trackedTerms))
+                .order(d3.stackOrderNone)
+                .offset(d3.stackOffsetWiggle); // Wiggle creates the streamgraph effect
+
+            const series = stack(filteredData);
+
+            // Create area generator
+            const area = d3.area()
+                .x(d => x(d.data.date))
+                .y0(d => y(d[0]))
+                .y1(d => y(d[1]))
+                .curve(d3.curveBasis);
+
+            // Create main group
+            const g = svg.append('g');
+
+            // Draw areas
+            g.selectAll('.term-area')
+                .data(series)
+                .join('path')
+                .attr('class', d => `term-area term-${d.key}`)
+                .attr('d', area)
+                .append('title')
+                .text(d => d.key);
+
+            // Add axes
+            const xAxis = d3.axisBottom(x)
+                .ticks(d3.timeMonth.every(6))
+                .tickFormat(d3.timeFormat('%b %Y'));
+
+            const yAxis = d3.axisLeft(y)
+                .ticks(5)
+                .tickFormat(d => d);
+
+            g.append('g')
+                .attr('transform', `translate(0,${height - margin.bottom})`)
+                .call(xAxis)
+                .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('dx', '-.8em')
+                .attr('dy', '.15em')
+                .attr('transform', 'rotate(-45)');
+
+            g.append('g')
+                .attr('transform', `translate(${margin.left},0)`)
+                .call(yAxis);
+
+            // Add axis labels
+            g.append('text')
+                .attr('x', width / 2)
+                .attr('y', height - 5)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('fill', '#666')
+                .text('Timeline');
+
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -(height / 2))
+                .attr('y', 15)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('fill', '#666')
+                .text('Term Frequency');
+
+            // Create legend
+            const legend = document.getElementById('term-timeline-legend');
+            const termLabels = {
+                'murder': 'Murder',
+                'police': 'Police',
+                'crime': 'Crime',
+                'woman': 'Woman/Women',
+                'death': 'Death',
+                'victim': 'Victim',
+                'whitechapel': 'Whitechapel',
+                'burke': 'Burke (& Hare)'
+            };
+
+            legend.innerHTML = Object.keys(trackedTerms).map(term => `
+                <div class="term-timeline-legend-item">
+                    <div class="term-timeline-legend-color term-${term}"></div>
+                    <span>${termLabels[term]}</span>
+                </div>
+            `).join('');
         }
 
         // Render geographic map
