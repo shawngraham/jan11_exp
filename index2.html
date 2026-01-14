@@ -740,6 +740,147 @@
             font-size: 1.05rem;
         }
 
+        /* Floating Notepad */
+        .notepad-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--color-ripper);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 999;
+        }
+
+        .notepad-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .notepad-container {
+            position: fixed;
+            bottom: 100px;
+            right: 2rem;
+            width: 350px;
+            max-height: 500px;
+            background: var(--color-paper);
+            border: 2px solid var(--color-ink);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            font-family: 'Crimson Text', serif;
+        }
+
+        .notepad-container.active {
+            display: flex;
+        }
+
+        .notepad-header {
+            background: var(--color-ink);
+            color: var(--color-paper);
+            padding: 0.75rem 1rem;
+            border-radius: 6px 6px 0 0;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+        }
+
+        .notepad-header-title {
+            font-size: 1.1rem;
+        }
+
+        .notepad-close {
+            background: none;
+            border: none;
+            color: var(--color-paper);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .notepad-close:hover {
+            color: var(--color-ripper);
+        }
+
+        .notepad-body {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .notepad-textarea {
+            flex: 1;
+            min-height: 300px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Crimson Text', serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        .notepad-textarea:focus {
+            outline: none;
+            border-color: var(--color-ripper);
+        }
+
+        .notepad-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #ddd;
+        }
+
+        .notepad-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            font-family: 'Crimson Text', serif;
+        }
+
+        .notepad-btn:hover {
+            background: var(--color-ink);
+            color: white;
+        }
+
+        .notepad-btn.export {
+            background: var(--color-shawville);
+            color: white;
+            border-color: var(--color-shawville);
+        }
+
+        .notepad-btn.export:hover {
+            background: #1a6e1a;
+        }
+
+        .notepad-info {
+            font-size: 0.8rem;
+            color: var(--color-ink-light);
+            font-style: italic;
+            text-align: center;
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 2rem; }
             .article-grid { grid-template-columns: 1fr; }
@@ -946,6 +1087,28 @@
 
     <!-- Tooltip -->
     <div class="tooltip" id="tooltip"></div>
+
+    <!-- Floating Notepad -->
+    <button class="notepad-toggle" id="notepad-toggle" title="Toggle Research Notes">
+        📝
+    </button>
+
+    <div class="notepad-container" id="notepad-container">
+        <div class="notepad-header" id="notepad-header">
+            <div class="notepad-header-title">Research Notes</div>
+            <button class="notepad-close" id="notepad-close">&times;</button>
+        </div>
+        <div class="notepad-body">
+            <textarea class="notepad-textarea" id="notepad-textarea" placeholder="Take notes about your observations...
+
+You can write freely here. Your notes are automatically saved to your browser."></textarea>
+            <div class="notepad-info">Notes automatically saved • Drag header to move</div>
+            <div class="notepad-actions">
+                <button class="notepad-btn" id="notepad-clear">Clear</button>
+                <button class="notepad-btn export" id="notepad-export">Export as TXT</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Global state
@@ -1911,6 +2074,113 @@
 
         // CSV download button
         document.getElementById('download-csv-btn').addEventListener('click', downloadNetworkCSV);
+
+        // Floating Notepad Functionality
+        const notepadToggle = document.getElementById('notepad-toggle');
+        const notepadContainer = document.getElementById('notepad-container');
+        const notepadClose = document.getElementById('notepad-close');
+        const notepadTextarea = document.getElementById('notepad-textarea');
+        const notepadClear = document.getElementById('notepad-clear');
+        const notepadExport = document.getElementById('notepad-export');
+        const notepadHeader = document.getElementById('notepad-header');
+
+        // Load saved notes from localStorage
+        const savedNotes = localStorage.getItem('equity-research-notes');
+        if (savedNotes) {
+            notepadTextarea.value = savedNotes;
+        }
+
+        // Toggle notepad visibility
+        notepadToggle.addEventListener('click', () => {
+            const isVisible = notepadContainer.style.display === 'flex';
+            notepadContainer.style.display = isVisible ? 'none' : 'flex';
+        });
+
+        // Close button
+        notepadClose.addEventListener('click', () => {
+            notepadContainer.style.display = 'none';
+        });
+
+        // Auto-save to localStorage on input
+        notepadTextarea.addEventListener('input', () => {
+            localStorage.setItem('equity-research-notes', notepadTextarea.value);
+        });
+
+        // Clear notes with confirmation
+        notepadClear.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all notes? This cannot be undone.')) {
+                notepadTextarea.value = '';
+                localStorage.removeItem('equity-research-notes');
+            }
+        });
+
+        // Export notes as TXT file
+        notepadExport.addEventListener('click', () => {
+            const notes = notepadTextarea.value;
+            if (!notes.trim()) {
+                alert('No notes to export.');
+                return;
+            }
+
+            const blob = new Blob([notes], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `equity-research-notes-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Drag functionality
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        notepadHeader.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        function dragStart(e) {
+            if (e.target === notepadClose) return; // Don't drag when clicking close button
+
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+
+            if (e.target === notepadHeader || e.target.classList.contains('notepad-header-title')) {
+                isDragging = true;
+                notepadHeader.style.cursor = 'grabbing';
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, notepadContainer);
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            notepadHeader.style.cursor = 'grab';
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+        }
 
         // Initialize
         loadData();
