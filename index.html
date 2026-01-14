@@ -432,49 +432,61 @@
             color: var(--color-ink-light);
         }
 
-        /* Word Cloud */
-        .word-cloud {
-            text-align: center;
-            padding: 3rem 2rem;
-            line-height: 3;
-            background: linear-gradient(135deg, #fdfbf7 0%, #f9f6ef 100%);
+        /* Term Timeline */
+        .term-timeline-container {
+            margin: 2rem 0;
+            background: white;
+            padding: 1.5rem;
             border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .word-cloud span {
-            display: inline-block;
-            margin: 0.75rem;
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--color-ink);
-            font-family: 'Playfair Display', serif;
-            font-weight: 600;
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .word-cloud span::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background: var(--color-ripper);
-            transition: all 0.3s;
-            transform: translateX(-50%);
-        }
-
-        .word-cloud span:hover {
-            color: var(--color-ripper);
-            transform: scale(1.15) translateY(-2px);
-            text-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
-        }
-
-        .word-cloud span:hover::before {
+        .term-timeline-svg {
             width: 100%;
+            height: 400px;
+            font-family: 'Crimson Text', serif;
         }
+
+        .term-timeline-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            font-family: 'Crimson Text', serif;
+        }
+
+        .term-timeline-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .term-timeline-legend-color {
+            width: 20px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .term-area {
+            transition: opacity 0.3s;
+        }
+
+        .term-area:hover {
+            opacity: 1 !important;
+            stroke: var(--color-ink);
+            stroke-width: 1.5px;
+        }
+
+        .term-murder { fill: var(--color-ripper); opacity: 0.8; }
+        .term-police { fill: #4169E1; opacity: 0.7; }
+        .term-crime { fill: #8B4513; opacity: 0.7; }
+        .term-woman { fill: #9370DB; opacity: 0.7; }
+        .term-death { fill: #2F4F4F; opacity: 0.7; }
+        .term-victim { fill: #DC143C; opacity: 0.7; }
+        .term-whitechapel { fill: #8B0000; opacity: 0.7; }
+        .term-burke { fill: #D2691E; opacity: 0.7; }
 
         /* Geographic Map */
         .geo-map {
@@ -675,6 +687,212 @@
             display: block;
         }
 
+        /* Space Invasion Chart */
+        .space-invasion-container {
+            margin: 2rem 0;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #space-invasion-svg {
+            width: 100%;
+            height: 500px;
+        }
+
+        .space-invasion-legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .space-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .space-legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .area-whitechapel { fill: var(--color-ripper); opacity: 0.8; }
+        .area-burke { fill: #8B4513; opacity: 0.8; }
+        .area-crime { fill: #4682B4; opacity: 0.7; }
+        .area-local { fill: var(--color-shawville); opacity: 0.7; }
+        .area-other { fill: #d4c5a9; opacity: 0.6; }
+
+        .axis-label {
+            font-size: 0.9rem;
+            fill: var(--color-ink-light);
+        }
+
+        /* OCR Warning */
+        .ocr-warning {
+            background: #fff9e6;
+            border-left: 4px solid #f39c12;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .ocr-warning strong {
+            color: #d68910;
+            font-size: 1.05rem;
+        }
+
+        /* Floating Notepad */
+        .notepad-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--color-ripper);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 999;
+        }
+
+        .notepad-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .notepad-container {
+            position: fixed;
+            bottom: 100px;
+            right: 2rem;
+            width: 350px;
+            max-height: 500px;
+            background: var(--color-paper);
+            border: 2px solid var(--color-ink);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            font-family: 'Crimson Text', serif;
+        }
+
+        .notepad-container.active {
+            display: flex;
+        }
+
+        .notepad-header {
+            background: var(--color-ink);
+            color: var(--color-paper);
+            padding: 0.75rem 1rem;
+            border-radius: 6px 6px 0 0;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+        }
+
+        .notepad-header-title {
+            font-size: 1.1rem;
+        }
+
+        .notepad-close {
+            background: none;
+            border: none;
+            color: var(--color-paper);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .notepad-close:hover {
+            color: var(--color-ripper);
+        }
+
+        .notepad-body {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .notepad-textarea {
+            flex: 1;
+            min-height: 300px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Crimson Text', serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        .notepad-textarea:focus {
+            outline: none;
+            border-color: var(--color-ripper);
+        }
+
+        .notepad-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #ddd;
+        }
+
+        .notepad-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            font-family: 'Crimson Text', serif;
+        }
+
+        .notepad-btn:hover {
+            background: var(--color-ink);
+            color: white;
+        }
+
+        .notepad-btn.export {
+            background: var(--color-shawville);
+            color: white;
+            border-color: var(--color-shawville);
+        }
+
+        .notepad-btn.export:hover {
+            background: #1a6e1a;
+        }
+
+        .notepad-info {
+            font-size: 0.8rem;
+            color: var(--color-ink-light);
+            font-style: italic;
+            text-align: center;
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 2rem; }
             .article-grid { grid-template-columns: 1fr; }
@@ -742,14 +960,16 @@
             </div>
         </div>
 
-        <!-- Word Cloud -->
+        <!-- Term Timeline -->
         <div class="section">
-            <h2>The Language of Horror</h2>
+            <h2>The Language of Violence Over Time</h2>
             <p style="margin-bottom: 1.5rem; color: var(--color-ink-light); font-style: italic; font-size: 1.1rem;">
-                What words defined the Ripper coverage? These are the most frequent terms from Whitechapel articles—hover to see how many times each appeared.
+                How did the vocabulary of violence evolve in The Equity? This streamgraph tracks key terms across all articles from 1888-1895,
+                revealing how coverage of murder, crime, and justice waxed and waned over the years.
             </p>
-            <div class="word-cloud" id="word-cloud">
-                <div class="loading">Loading word cloud...</div>
+            <div class="term-timeline-container">
+                <svg id="term-timeline-svg" class="term-timeline-svg"></svg>
+                <div class="term-timeline-legend" id="term-timeline-legend"></div>
             </div>
         </div>
 
@@ -814,21 +1034,50 @@
             </div>
         </div>
 
-        <!-- Timeline -->
+        <!-- Space Invasion -->
         <div class="section">
-            <h2>Timeline: London to Shawville</h2>
-            <p style="margin-bottom: 2rem; color: var(--color-ink-light); font-style: italic;">
-                The London timeline shows events on a focused scale (August-November 1888) to reveal individual murders and investigations.
-                The Shawville timeline uses a broader scale (1888-1895) to show how coverage extended across years.
+            <h2>The Invasion: How Much Space Did Horror Claim?</h2>
+            <p style="margin-bottom: 1.5rem; color: var(--color-ink-light); font-style: italic; font-size: 1.1rem;">
+                Between 1888 and 1895, Whitechapel murders and Burke & Hare retrospectives "invaded" The Equity's pages.
+                This chart shows the proportion of content devoted to different topics over time.
+                Watch how distant horrors flood local news space—especially in autumn 1888.
             </p>
-            <div class="timeline" id="timeline">
-                <div class="loading">Loading timeline...</div>
+            <div class="space-invasion-container">
+                <svg id="space-invasion-svg"></svg>
+            </div>
+            <div class="space-invasion-legend">
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: var(--color-ripper);"></div>
+                    <span>Whitechapel/Ripper</span>
+                </div>
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: #8B4513;"></div>
+                    <span>Burke & Hare</span>
+                </div>
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: #4682B4;"></div>
+                    <span>General Crime</span>
+                </div>
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: var(--color-shawville);"></div>
+                    <span>Local Violence</span>
+                </div>
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: #d4c5a9;"></div>
+                    <span>Other Content</span>
+                </div>
             </div>
         </div>
 
         <!-- Articles -->
         <div class="section">
             <h2>The Articles</h2>
+
+            <!-- OCR Warning -->
+            <div class="ocr-warning">
+                <strong>⚠️ Note on OCR Quality:</strong> The best OCR would be to get a commercial grade vision model to examine all of these snippets. I am experimenting with pytesseract and the surya model. You will see some quite odd things! Always check the original snippets.
+            </div>
+
             <div class="filters">
                 <button class="filter-btn active" data-filter="whitechapel">Whitechapel/Ripper</button>
                 <button class="filter-btn" data-filter="burke">Burke & Hare</button>
@@ -852,6 +1101,28 @@
 
     <!-- Tooltip -->
     <div class="tooltip" id="tooltip"></div>
+
+    <!-- Floating Notepad -->
+    <button class="notepad-toggle" id="notepad-toggle" title="Toggle Research Notes">
+        📝
+    </button>
+
+    <div class="notepad-container" id="notepad-container">
+        <div class="notepad-header" id="notepad-header">
+            <div class="notepad-header-title">Research Notes</div>
+            <button class="notepad-close" id="notepad-close">&times;</button>
+        </div>
+        <div class="notepad-body">
+            <textarea class="notepad-textarea" id="notepad-textarea" placeholder="Take notes about your observations...
+
+You can write freely here. Your notes are automatically saved to your browser."></textarea>
+            <div class="notepad-info">Notes automatically saved • Drag header to move</div>
+            <div class="notepad-actions">
+                <button class="notepad-btn" id="notepad-clear">Clear</button>
+                <button class="notepad-btn export" id="notepad-export">Export as TXT</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Global state
@@ -1160,10 +1431,10 @@
                 console.log('Loaded text analysis:', textAnalysis);
 
                 renderStats();
-                renderWordCloud();
+                renderTermTimeline();
                 renderGeoMap();
                 renderNetwork('all');
-                renderTimeline();
+                renderSpaceInvasion();
                 renderArticles();
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -1193,29 +1464,160 @@
             document.getElementById('stat-local-violence').textContent = localViolenceArticles.length;
         }
 
-        // Render word cloud
-        function renderWordCloud() {
-            const container = document.getElementById('word-cloud');
+        // Render term timeline (streamgraph)
+        function renderTermTimeline() {
+            const svg = d3.select('#term-timeline-svg');
+            const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+            const width = svg.node().getBoundingClientRect().width;
+            const height = 400;
 
-            // Get top 50 words from word cloud data
-            const words = textAnalysisData.word_cloud_data.slice(0, 50);
+            svg.selectAll('*').remove();
 
-            // Calculate font size range
-            const maxSize = words[0].size;
-            const minSize = words[words.length - 1].size;
+            // Define key terms to track across ALL articles
+            const trackedTerms = {
+                'murder': /\bmurders?\b/gi,
+                'police': /\bpolice\b/gi,
+                'crime': /\bcrimes?\b/gi,
+                'woman': /\bwom[ae]n\b/gi,
+                'death': /\bdeaths?\b/gi,
+                'victim': /\bvictims?\b/gi,
+                'whitechapel': /\bwhitechapel\b/gi,
+                'burke': /\bburke\b/gi
+            };
 
-            let html = '';
-            words.forEach(word => {
-                // Scale font size from 0.9rem to 3.5rem with more dramatic variation
-                const scale = (word.size - minSize) / (maxSize - minSize);
-                const fontSize = 0.9 + (scale * 2.6);
-                const opacity = 0.6 + (scale * 0.4);
+            // Count term occurrences by month across ALL articles
+            const monthlyTerms = d3.rollup(
+                articlesData,
+                articles => {
+                    const counts = {};
+                    Object.keys(trackedTerms).forEach(term => {
+                        counts[term] = 0;
+                        articles.forEach(article => {
+                            const text = `${article.title} ${article.transcription || ''}`.toLowerCase();
+                            const matches = text.match(trackedTerms[term]);
+                            counts[term] += matches ? matches.length : 0;
+                        });
+                    });
+                    return counts;
+                },
+                d => {
+                    const date = new Date(d.date);
+                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                }
+            );
 
-                html += `<span style="font-size: ${fontSize}rem; opacity: ${opacity};"
-                              title="${word.text}: ${word.size} occurrences">${word.text}</span>`;
-            });
+            // Convert to array and sort by date
+            const timelineData = Array.from(monthlyTerms, ([month, counts]) => ({
+                month: month,
+                date: new Date(month + '-01'),
+                ...counts
+            })).sort((a, b) => a.date - b.date);
 
-            container.innerHTML = html;
+            // Filter to only months with at least some coverage
+            const filteredData = timelineData.filter(d =>
+                Object.keys(trackedTerms).some(term => d[term] > 0)
+            );
+
+            // Create scales
+            const x = d3.scaleTime()
+                .domain(d3.extent(filteredData, d => d.date))
+                .range([margin.left, width - margin.right]);
+
+            // Find max total for y scale
+            const maxTotal = d3.max(filteredData, d =>
+                Object.keys(trackedTerms).reduce((sum, term) => sum + d[term], 0)
+            );
+
+            const y = d3.scaleLinear()
+                .domain([0, maxTotal])
+                .range([height - margin.bottom, margin.top]);
+
+            // Create stack
+            const stack = d3.stack()
+                .keys(Object.keys(trackedTerms))
+                .order(d3.stackOrderNone)
+                .offset(d3.stackOffsetWiggle); // Wiggle creates the streamgraph effect
+
+            const series = stack(filteredData);
+
+            // Create area generator
+            const area = d3.area()
+                .x(d => x(d.data.date))
+                .y0(d => y(d[0]))
+                .y1(d => y(d[1]))
+                .curve(d3.curveBasis);
+
+            // Create main group
+            const g = svg.append('g');
+
+            // Draw areas
+            g.selectAll('.term-area')
+                .data(series)
+                .join('path')
+                .attr('class', d => `term-area term-${d.key}`)
+                .attr('d', area)
+                .append('title')
+                .text(d => d.key);
+
+            // Add axes
+            const xAxis = d3.axisBottom(x)
+                .ticks(d3.timeMonth.every(6))
+                .tickFormat(d3.timeFormat('%b %Y'));
+
+            const yAxis = d3.axisLeft(y)
+                .ticks(5)
+                .tickFormat(d => d);
+
+            g.append('g')
+                .attr('transform', `translate(0,${height - margin.bottom})`)
+                .call(xAxis)
+                .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('dx', '-.8em')
+                .attr('dy', '.15em')
+                .attr('transform', 'rotate(-45)');
+
+            g.append('g')
+                .attr('transform', `translate(${margin.left},0)`)
+                .call(yAxis);
+
+            // Add axis labels
+            g.append('text')
+                .attr('x', width / 2)
+                .attr('y', height - 5)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('fill', '#666')
+                .text('Timeline');
+
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -(height / 2))
+                .attr('y', 15)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('fill', '#666')
+                .text('Term Frequency');
+
+            // Create legend
+            const legend = document.getElementById('term-timeline-legend');
+            const termLabels = {
+                'murder': 'Murder',
+                'police': 'Police',
+                'crime': 'Crime',
+                'woman': 'Woman/Women',
+                'death': 'Death',
+                'victim': 'Victim',
+                'whitechapel': 'Whitechapel',
+                'burke': 'Burke (& Hare)'
+            };
+
+            legend.innerHTML = Object.keys(trackedTerms).map(term => `
+                <div class="term-timeline-legend-item">
+                    <div class="term-timeline-legend-color term-${term}"></div>
+                    <span>${termLabels[term]}</span>
+                </div>
+            `).join('');
         }
 
         // Render geographic map
@@ -1470,122 +1872,139 @@
             }
         }
 
-        // Render timeline
-        function renderTimeline() {
-            const container = document.getElementById('timeline');
+        // Render Space Invasion visualization
+        function renderSpaceInvasion() {
+            const svg = d3.select('#space-invasion-svg');
+            svg.selectAll('*').remove();
 
-            // Get separate date ranges for London and Shawville
-            const londonDates = timelineData.london_events.map(e => new Date(e.date));
-            const shawvilleDates = timelineData.shawville_events.map(e => new Date(e.date));
+            const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+            const width = svg.node().clientWidth - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
 
-            const londonMinDate = new Date(Math.min(...londonDates));
-            const londonMaxDate = new Date(Math.max(...londonDates));
-            const londonDateRange = londonMaxDate - londonMinDate;
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
 
-            const allDates = [...londonDates, ...shawvilleDates];
-            const globalMinDate = new Date(Math.min(...allDates));
-            const globalMaxDate = new Date(Math.max(...allDates));
-            const globalDateRange = globalMaxDate - globalMinDate;
+            // Group articles by month and categorize
+            const monthlyData = d3.rollup(
+                articlesData,
+                articles => {
+                    const whitechapel = articles.filter(a => a.is_whitechapel || a.is_ripper_related);
+                    const burke = articles.filter(isBurkeHare);
+                    const crime = articles.filter(isGeneralCrime);
+                    const local = articles.filter(isLocalViolence);
+                    const other = articles.filter(a =>
+                        !whitechapel.includes(a) && !burke.includes(a) &&
+                        !crime.includes(a) && !local.includes(a)
+                    );
 
-            // Build HTML
-            let html = '';
+                    return {
+                        whitechapel: d3.sum(whitechapel, d => d.word_count || 0),
+                        burke: d3.sum(burke, d => d.word_count || 0),
+                        crime: d3.sum(crime, d => d.word_count || 0),
+                        local: d3.sum(local, d => d.word_count || 0),
+                        other: d3.sum(other, d => d.word_count || 0)
+                    };
+                },
+                d => {
+                    const date = new Date(d.date);
+                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                }
+            );
 
-            // London track - uses its own focused scale
-            html += '<div class="timeline-track">';
-            html += '<div class="timeline-label london">London Events <small style="opacity: 0.7;">(Aug-Nov 1888)</small></div>';
-            html += '<div class="timeline-line"></div>';
-            html += '<div class="timeline-events">';
-            timelineData.london_events.forEach(event => {
-                const date = new Date(event.date);
-                // Use London-specific scale to spread out the events
-                const position = ((date - londonMinDate) / londonDateRange) * 100;
-                const className = event.type === 'murder' ? 'murder' : 'london';
-                html += `
-                    <div class="timeline-event" style="left: ${position}%"
-                         data-event="${event.id}"
-                         data-type="london">
-                        <div class="event-marker ${className}"></div>
-                        <div class="event-label">${event.title}</div>
-                    </div>
-                `;
+            // Convert to array and sort by date
+            const dataArray = Array.from(monthlyData, ([key, value]) => ({
+                date: new Date(key + '-01'),
+                ...value
+            })).sort((a, b) => a.date - b.date);
+
+            // Calculate percentages
+            dataArray.forEach(d => {
+                const total = d.whitechapel + d.burke + d.crime + d.local + d.other;
+                d.whitechapelPct = total > 0 ? (d.whitechapel / total) * 100 : 0;
+                d.burkePct = total > 0 ? (d.burke / total) * 100 : 0;
+                d.crimePct = total > 0 ? (d.crime / total) * 100 : 0;
+                d.localPct = total > 0 ? (d.local / total) * 100 : 0;
+                d.otherPct = total > 0 ? (d.other / total) * 100 : 0;
             });
-            html += '</div></div>';
 
-            // Shawville track - uses global scale to show time lag
-            html += '<div class="timeline-track" style="margin-top: 3rem;">';
-            html += '<div class="timeline-label shawville">Shawville Publications <small style="opacity: 0.7;">(1888-1895)</small></div>';
-            html += '<div class="timeline-line"></div>';
-            html += '<div class="timeline-events">';
-            timelineData.shawville_events.forEach(event => {
-                const date = new Date(event.date);
-                // Use global scale to show distribution over time
-                const position = ((date - globalMinDate) / globalDateRange) * 100;
-                html += `
-                    <div class="timeline-event" style="left: ${position}%"
-                         data-event="${event.article_id}"
-                         data-type="shawville">
-                        <div class="event-marker shawville"></div>
-                        <div class="event-label">${event.date_display}</div>
-                    </div>
-                `;
-            });
-            html += '</div></div>';
+            // Scales
+            const x = d3.scaleTime()
+                .domain(d3.extent(dataArray, d => d.date))
+                .range([0, width]);
 
-            container.innerHTML = html;
+            const y = d3.scaleLinear()
+                .domain([0, 100])
+                .range([height, 0]);
 
-            // Add event listeners
-            document.querySelectorAll('.timeline-event').forEach(el => {
-                el.addEventListener('mouseenter', showTooltip);
-                el.addEventListener('mouseleave', hideTooltip);
-                el.addEventListener('click', handleTimelineClick);
-            });
-        }
+            // Stack the data
+            const stack = d3.stack()
+                .keys(['otherPct', 'localPct', 'crimePct', 'burkePct', 'whitechapelPct'])
+                .order(d3.stackOrderNone)
+                .offset(d3.stackOffsetNone);
 
-        // Show tooltip
-        function showTooltip(e) {
-            const eventId = e.currentTarget.dataset.event;
-            const eventType = e.currentTarget.dataset.type;
-            const tooltip = document.getElementById('tooltip');
+            const stackedData = stack(dataArray);
 
-            let content = '';
-            if (eventType === 'london') {
-                const event = timelineData.london_events.find(ev => ev.id === eventId);
-                content = `
-                    <strong>${event.title}</strong><br>
-                    ${event.date}<br>
-                    ${event.location}<br>
-                    <em>${event.description}</em>
-                `;
-            } else {
-                const event = timelineData.shawville_events.find(ev => ev.article_id === eventId);
-                content = `
-                    <strong>The Equity</strong><br>
-                    ${event.date_display}<br>
-                    ${event.time_lag_days} days after ${event.correlated_event}
-                `;
-            }
+            // Area generator
+            const area = d3.area()
+                .x(d => x(d.data.date))
+                .y0(d => y(d[0]))
+                .y1(d => y(d[1]))
+                .curve(d3.curveMonotoneX);
 
-            tooltip.innerHTML = content;
-            tooltip.classList.add('visible');
+            // Color mapping
+            const colorMap = {
+                'whitechapelPct': 'area-whitechapel',
+                'burkePct': 'area-burke',
+                'crimePct': 'area-crime',
+                'localPct': 'area-local',
+                'otherPct': 'area-other'
+            };
 
-            const rect = e.currentTarget.getBoundingClientRect();
-            tooltip.style.left = rect.left + 'px';
-            tooltip.style.top = (rect.bottom + 10) + 'px';
-        }
+            // Draw areas
+            g.selectAll('.area')
+                .data(stackedData)
+                .join('path')
+                .attr('class', d => colorMap[d.key] || 'area-other')
+                .attr('d', area)
+                .append('title')
+                .text(d => d.key.replace('Pct', ''));
 
-        function hideTooltip() {
-            document.getElementById('tooltip').classList.remove('visible');
-        }
+            // Add axes
+            const xAxis = d3.axisBottom(x)
+                .ticks(d3.timeYear.every(1))
+                .tickFormat(d3.timeFormat('%Y'));
 
-        // Handle timeline click
-        function handleTimelineClick(e) {
-            const eventId = e.currentTarget.dataset.event;
-            const eventType = e.currentTarget.dataset.type;
+            const yAxis = d3.axisLeft(y)
+                .ticks(5)
+                .tickFormat(d => d + '%');
 
-            if (eventType === 'shawville') {
-                const article = articlesData.find(a => a.article_id === eventId);
-                if (article) showArticleModal(article);
-            }
+            g.append('g')
+                .attr('transform', `translate(0,${height})`)
+                .call(xAxis)
+                .selectAll('text')
+                .attr('transform', 'rotate(-45)')
+                .style('text-anchor', 'end');
+
+            g.append('g')
+                .call(yAxis);
+
+            // Axis labels
+            g.append('text')
+                .attr('class', 'axis-label')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', -45)
+                .attr('x', -height / 2)
+                .attr('text-anchor', 'middle')
+                .text('Percentage of Content');
+
+            g.append('text')
+                .attr('class', 'axis-label')
+                .attr('x', width / 2)
+                .attr('y', height + 50)
+                .attr('text-anchor', 'middle')
+                .text('Publication Date');
+
+            console.log('Space invasion visualization rendered with', dataArray.length, 'data points');
         }
 
         // Render articles
@@ -1800,6 +2219,113 @@
 
         // CSV download button
         document.getElementById('download-csv-btn').addEventListener('click', downloadNetworkCSV);
+
+        // Floating Notepad Functionality
+        const notepadToggle = document.getElementById('notepad-toggle');
+        const notepadContainer = document.getElementById('notepad-container');
+        const notepadClose = document.getElementById('notepad-close');
+        const notepadTextarea = document.getElementById('notepad-textarea');
+        const notepadClear = document.getElementById('notepad-clear');
+        const notepadExport = document.getElementById('notepad-export');
+        const notepadHeader = document.getElementById('notepad-header');
+
+        // Load saved notes from localStorage
+        const savedNotes = localStorage.getItem('equity-research-notes');
+        if (savedNotes) {
+            notepadTextarea.value = savedNotes;
+        }
+
+        // Toggle notepad visibility
+        notepadToggle.addEventListener('click', () => {
+            const isVisible = notepadContainer.style.display === 'flex';
+            notepadContainer.style.display = isVisible ? 'none' : 'flex';
+        });
+
+        // Close button
+        notepadClose.addEventListener('click', () => {
+            notepadContainer.style.display = 'none';
+        });
+
+        // Auto-save to localStorage on input
+        notepadTextarea.addEventListener('input', () => {
+            localStorage.setItem('equity-research-notes', notepadTextarea.value);
+        });
+
+        // Clear notes with confirmation
+        notepadClear.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all notes? This cannot be undone.')) {
+                notepadTextarea.value = '';
+                localStorage.removeItem('equity-research-notes');
+            }
+        });
+
+        // Export notes as TXT file
+        notepadExport.addEventListener('click', () => {
+            const notes = notepadTextarea.value;
+            if (!notes.trim()) {
+                alert('No notes to export.');
+                return;
+            }
+
+            const blob = new Blob([notes], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `equity-research-notes-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Drag functionality
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        notepadHeader.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        function dragStart(e) {
+            if (e.target === notepadClose) return; // Don't drag when clicking close button
+
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+
+            if (e.target === notepadHeader || e.target.classList.contains('notepad-header-title')) {
+                isDragging = true;
+                notepadHeader.style.cursor = 'grabbing';
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, notepadContainer);
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            notepadHeader.style.cursor = 'grab';
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+        }
 
         // Initialize
         loadData();
