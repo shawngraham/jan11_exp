@@ -3,259 +3,1685 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whitechapel in Shawville | The Intrusion of Horror</title>
-    <meta name="description" content="An interactive exploration of how Jack the Ripper's murders reached rural Quebec through The Equity newspaper, 1888-1895">
+    <title>Whitechapel in Shawville | Interactive Exploration</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/timeline.css">
-    <link rel="stylesheet" href="css/newspaper.css">
-    <link rel="stylesheet" href="css/visualizations.css">
-
-    <!-- External Libraries -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/intersection-observer@0.12.0/intersection-observer.js"></script>
-    <script src="https://unpkg.com/scrollama"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-bg: #f5f1e8;
+            --color-paper: #fdfbf7;
+            --color-ink: #2c2416;
+            --color-ink-light: #6b5f4f;
+            --color-ripper: #8b0000;
+            --color-london: #191970;
+            --color-shawville: #228b22;
+        }
+
+        body {
+            font-family: 'Crimson Text', Georgia, 'Times New Roman', serif;
+            background: var(--color-bg);
+            color: var(--color-ink);
+            line-height: 1.7;
+            font-size: 18px;
+        }
+
+        header {
+            background: var(--color-ink);
+            color: var(--color-paper);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.02em;
+        }
+
+        h2, h3 {
+            font-family: 'Playfair Display', Georgia, serif;
+        }
+
+        h2 {
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: #d4c5a9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .section {
+            background: var(--color-paper);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--color-ripper);
+            border-bottom: 3px solid var(--color-ripper);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline-track {
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .timeline-label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .timeline-label.london { color: var(--color-london); }
+        .timeline-label.shawville { color: var(--color-shawville); }
+
+        .timeline-line {
+            height: 4px;
+            background: #ddd;
+            position: relative;
+            margin: 1rem 0;
+        }
+
+        .timeline-events {
+            position: relative;
+            min-height: 80px;
+        }
+
+        .timeline-event {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .timeline-event:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .event-marker {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .event-marker.london { background: var(--color-london); }
+        .event-marker.shawville { background: var(--color-shawville); }
+        .event-marker.murder {
+            background: var(--color-ripper);
+            box-shadow: 0 0 8px rgba(139, 0, 0, 0.6);
+        }
+
+        .event-label {
+            position: absolute;
+            top: 25px;
+            left: -40px;
+            width: 100px;
+            font-size: 0.7rem;
+            text-align: center;
+            line-height: 1.2;
+            pointer-events: none;
+        }
+
+        /* Article Cards */
+        .article-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .article-card {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .article-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: var(--color-ripper);
+        }
+
+        .article-card.whitechapel {
+            border-color: var(--color-ripper);
+            background: #fff5f5;
+        }
+
+        .article-card.burke-hare {
+            border-color: #8B4513;
+            background: #fff9f0;
+        }
+
+        .article-card.local-violence {
+            border-color: var(--color-shawville);
+            background: #f5fff5;
+        }
+
+        .article-card .badge {
+            display: inline-block;
+            background: var(--color-ripper);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.7rem;
+            border-radius: 3px;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .article-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--color-ink);
+        }
+
+        .article-card .meta {
+            font-size: 0.85rem;
+            color: var(--color-ink-light);
+            margin-bottom: 0.75rem;
+        }
+
+        .article-card .snippet {
+            font-size: 0.9rem;
+            color: var(--color-ink);
+            line-height: 1.5;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--color-ripper);
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--color-ink-light);
+            margin-top: 0.5rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal-content {
+            background: var(--color-paper);
+            max-width: 800px;
+            width: 100%;
+            border-radius: 8px;
+            padding: 2rem;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--color-ink-light);
+            padding: 0.5rem;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--color-ripper);
+        }
+
+        .modal h2 {
+            margin-bottom: 1rem;
+            color: var(--color-ripper);
+        }
+
+        .modal .meta {
+            font-size: 0.9rem;
+            color: var(--color-ink-light);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .modal .text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            text-align: justify;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--color-ink-light);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: var(--color-ink);
+            color: white;
+        }
+
+        .filter-btn.active {
+            background: var(--color-ripper);
+            color: white;
+            border-color: var(--color-ripper);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            font-size: 1.2rem;
+            color: var(--color-ink-light);
+        }
+
+        /* Word Cloud */
+        .word-cloud {
+            text-align: center;
+            padding: 3rem 2rem;
+            line-height: 3;
+            background: linear-gradient(135deg, #fdfbf7 0%, #f9f6ef 100%);
+            border-radius: 8px;
+        }
+
+        .word-cloud span {
+            display: inline-block;
+            margin: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--color-ink);
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .word-cloud span::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--color-ripper);
+            transition: all 0.3s;
+            transform: translateX(-50%);
+        }
+
+        .word-cloud span:hover {
+            color: var(--color-ripper);
+            transform: scale(1.15) translateY(-2px);
+            text-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
+        }
+
+        .word-cloud span:hover::before {
+            width: 100%;
+        }
+
+        /* Geographic Map */
+        .geo-map {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .location-box {
+            background: white;
+            border-radius: 6px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .location-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .location-box.london { border-left: 4px solid var(--color-ripper); }
+        .location-box.edinburgh { border-left: 4px solid #8B4513; }
+        .location-box.shawville { border-left: 4px solid var(--color-shawville); }
+        .location-box.international { border-left: 4px solid var(--color-london); }
+        .location-box.canadian { border-left: 4px solid #DC143C; }
+
+        .location-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--color-ink);
+        }
+
+        .location-count {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--color-ripper);
+            margin: 0.5rem 0;
+        }
+
+        .location-desc {
+            font-size: 0.85rem;
+            color: var(--color-ink-light);
+            font-style: italic;
+        }
+
+        .location-bar {
+            height: 8px;
+            background: var(--color-paper-dark);
+            border-radius: 4px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .location-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-ripper), #d4af37);
+            transition: width 0.6s ease;
+        }
+
+        /* Network Graph */
+        .network-container {
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 2rem;
+            min-height: 600px;
+        }
+
+        #network-svg {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .network-node {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .network-node:hover {
+            stroke-width: 3px;
+        }
+
+        .network-node.person {
+            fill: var(--color-ripper);
+            stroke: #8b0000;
+        }
+
+        .network-node.place {
+            fill: var(--color-shawville);
+            stroke: #228b22;
+        }
+
+        .network-link {
+            stroke: #999;
+            stroke-opacity: 0.3;
+        }
+
+        .network-link.person-person {
+            stroke: #d4af37;
+            stroke-opacity: 0.4;
+            stroke-dasharray: 3,3;
+        }
+
+        .network-link.person-place {
+            stroke: #999;
+            stroke-opacity: 0.3;
+        }
+
+        .network-label {
+            font-size: 10px;
+            pointer-events: none;
+            fill: var(--color-ink);
+            font-family: Arial, sans-serif;
+        }
+
+        .network-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .network-control-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .network-control-btn:hover {
+            background: var(--color-ink);
+            color: white;
+        }
+
+        .network-control-btn.active {
+            background: var(--color-ripper);
+            color: white;
+            border-color: var(--color-ripper);
+        }
+
+        .network-legend {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .network-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .network-legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .network-legend-dot.person {
+            background: var(--color-ripper);
+        }
+
+        .network-legend-dot.place {
+            background: var(--color-shawville);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: var(--color-ink);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+            max-width: 250px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .tooltip.visible {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .article-grid { grid-template-columns: 1fr; }
+            .modal-content { padding: 1rem; }
+        }
+    </style>
 </head>
 <body>
-    <!-- Hero Section -->
-    <section id="hero" class="section-full">
-        <div class="hero-content">
-            <h1 class="hero-title">Whitechapel<br>in<br>Shawville</h1>
-            <p class="hero-subtitle">What does Jack the Ripper mean to a village in rural Quebec?</p>
-            <div class="scroll-indicator">
-                <span>Scroll to explore</span>
-                <div class="scroll-arrow"></div>
-            </div>
-        </div>
-        <div class="hero-background"></div>
-    </section>
+    <header>
+        <h1>Whitechapel in Shawville</h1>
+        <p class="subtitle">How Jack the Ripper's murders reached rural Quebec, 1888-1895</p>
+    </header>
 
-    <!-- Introduction -->
-    <section id="introduction" class="section">
-        <div class="container">
-            <div class="content-block">
-                <h2>A Question of Distance</h2>
-                <p class="lead">In 1888, as Jack the Ripper stalked the fog-shrouded streets of London's Whitechapel district, a small anglophone village in western Quebec was also confronting these horrors&mdash;through the pages of its local newspaper.</p>
-
-                <div class="context-grid">
-                    <div class="context-card">
-                        <h3>Shawville</h3>
-                        <p>Founded by Irish Protestant settlers after 1815, Shawville was incorporated as a municipality in 1873. By the 1880s, the arrival of the Pontiac and Pacific Junction Railway in 1886 had transformed this overwhelmingly anglophone community into a hub of the Pontiac region.</p>
-                    </div>
-
-                    <div class="context-card">
-                        <h3>The Equity</h3>
-                        <p>Established on June 7, 1883, by John Cowan and Henry Thomas Smith, <em>The Equity</em> began in nearby Bryson before moving to Shawville in October 1888&mdash;the very autumn of the Whitechapel murders. As "the Voice of the Pontiac," it brought world news to the village.</p>
-                    </div>
+    <div class="container">
+        <!-- Statistics -->
+        <div class="section">
+            <h2>The Intrusion</h2>
+            <div class="stats" id="stats">
+                <div class="stat-box">
+                    <div class="stat-number" id="stat-london">-</div>
+                    <div class="stat-label">London Events</div>
                 </div>
-
-                <p>Between 1888 and 1895, <em>The Equity</em> carried reports of the Whitechapel murders, creating curious intrusions of metropolitan horror into the fabric of rural colonial life. These were more than mere news items&mdash;they were windows into how global events reached the hinterland, how British identity was constructed and maintained across an ocean, and how sensational crime bridged the distance between metropolis and colony.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Timeline Section -->
-    <section id="timeline-section" class="section section-dark">
-        <div class="container-wide">
-            <div class="section-header">
-                <h2>The Intrusion</h2>
-                <p class="section-subtitle">When did horror cross the Atlantic?</p>
-            </div>
-
-            <div id="dual-timeline" class="timeline-container">
-                <!-- Timeline will be rendered by D3.js -->
-            </div>
-
-            <div class="timeline-legend">
-                <div class="legend-item">
-                    <span class="legend-marker london"></span>
-                    <span>London Events</span>
+                <div class="stat-box">
+                    <div class="stat-number" id="stat-shawville">-</div>
+                    <div class="stat-label">Shawville Reports</div>
                 </div>
-                <div class="legend-item">
-                    <span class="legend-marker shawville"></span>
-                    <span>Shawville Publications</span>
+                <div class="stat-box">
+                    <div class="stat-number" id="stat-pages">-</div>
+                    <div class="stat-label">Newspaper Pages</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="stat-days">-</div>
+                    <div class="stat-label">Average Delay (days)</div>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Newspaper Pages Section -->
-    <section id="newspaper-pages" class="section">
-        <div class="container">
-            <div class="section-header">
-                <h2>Motes of Space-Time</h2>
-                <p class="section-subtitle">The Whitechapel articles were like little portals&mdash;moments where London intruded into Shawville. What surrounded them on the page?</p>
-            </div>
-        </div>
-
-        <div id="newspaper-viewer" class="newspaper-viewer">
-            <!-- Newspaper pages will be rendered here -->
-        </div>
-
-        <div class="container">
-            <p class="helper-text">Click on highlighted articles to read them</p>
-        </div>
-    </section>
-
-    <!-- Data Visualization Section -->
-    <section id="data-viz" class="section section-light">
-        <div class="container">
-            <div class="section-header">
-                <h2>The Pattern</h2>
-                <p class="section-subtitle">How much space did distant murders occupy in the local consciousness?</p>
-            </div>
-
-            <div class="viz-grid">
-                <div class="viz-card">
-                    <h3>Coverage Over Time</h3>
-                    <div id="frequency-chart"></div>
+        <!-- Crime Comparison -->
+        <div class="section">
+            <h2>Murder Stories in The Equity</h2>
+            <p style="margin-bottom: 2rem; color: var(--color-ink-light);">
+                How did The Equity frame different types of murder coverage?
+            </p>
+            <div class="stats">
+                <div class="stat-box" style="border: 2px solid var(--color-ripper);">
+                    <div class="stat-number" id="stat-whitechapel" style="color: var(--color-ripper);">-</div>
+                    <div class="stat-label">Whitechapel/Ripper<br><small style="font-size: 0.8rem;">London, 1888-1895</small></div>
                 </div>
-
-                <div class="viz-card">
-                    <h3>Article Types</h3>
-                    <div id="article-breakdown"></div>
+                <div class="stat-box" style="border: 2px solid #8B4513;">
+                    <div class="stat-number" id="stat-burke" style="color: #8B4513;">-</div>
+                    <div class="stat-label">Burke & Hare<br><small style="font-size: 0.8rem;">Edinburgh, 1828</small></div>
+                </div>
+                <div class="stat-box" style="border: 2px solid #2F4F4F;">
+                    <div class="stat-number" id="stat-crime">-</div>
+                    <div class="stat-label">General Crime<br><small style="font-size: 0.8rem;">Various locations</small></div>
+                </div>
+                <div class="stat-box" style="border: 2px solid var(--color-shawville);">
+                    <div class="stat-number" id="stat-local-violence" style="color: var(--color-shawville);">-</div>
+                    <div class="stat-label">Local Violence<br><small style="font-size: 0.8rem;">Shawville/Pontiac</small></div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Text Analysis Section -->
-    <section id="text-analysis" class="section">
-        <div class="container">
-            <div class="section-header">
-                <h2>The Language of Horror</h2>
-                <p class="section-subtitle">How did <em>The Equity</em> frame the Whitechapel murders?</p>
+            <div style="margin-top: 1.5rem; padding: 1rem; background: #fff9e6; border-left: 4px solid #8B4513; border-radius: 4px;">
+                <strong>October 25, 1888:</strong> The Equity ran 7 articles about Burke & Hare (Edinburgh body snatchers, 1828)
+                during the height of the Ripper murders. Historical horror alongside contemporary terror.
             </div>
+        </div>
 
-            <div class="analysis-container">
-                <div class="word-cloud-wrapper">
-                    <div id="word-cloud"></div>
+        <!-- Word Cloud -->
+        <div class="section">
+            <h2>The Language of Horror</h2>
+            <p style="margin-bottom: 1.5rem; color: var(--color-ink-light); font-style: italic; font-size: 1.1rem;">
+                What words defined the Ripper coverage? These are the most frequent terms from Whitechapel articles—hover to see how many times each appeared.
+            </p>
+            <div class="word-cloud" id="word-cloud">
+                <div class="loading">Loading word cloud...</div>
+            </div>
+        </div>
+
+        <!-- Geographic Map -->
+        <div class="section">
+            <h2>Geography of News</h2>
+            <p style="margin-bottom: 1rem; color: var(--color-ink-light);">
+                Where did The Equity's stories originate? Click a location to filter articles.
+            </p>
+            <div class="geo-map" id="geo-map">
+                <div class="loading">Analyzing locations...</div>
+            </div>
+        </div>
+
+        <!-- Network Visualization -->
+        <div class="section">
+            <h2>People & Places Network</h2>
+            <p style="margin-bottom: 1rem; color: var(--color-ink-light);">
+                Who was connected to where, and to whom? This network shows people (red) and places (green) mentioned together in articles.
+                Solid lines connect people to places, while dashed gold lines show people mentioned together.
+                Node size reflects frequency of mentions.
+            </p>
+            <div class="network-controls">
+                <button class="network-control-btn active" data-network-filter="all">All Connections</button>
+                <button class="network-control-btn" data-network-filter="whitechapel">Whitechapel Only</button>
+                <button class="network-control-btn" data-network-filter="burke">Burke & Hare</button>
+                <button class="network-control-btn" id="reset-zoom-btn" style="margin-left: auto; background: #f0f0f0;">Reset View</button>
+                <button class="network-control-btn" id="download-csv-btn" style="background: var(--color-shawville); color: white;">Download CSV</button>
+                <span style="color: var(--color-ink-light); font-size: 0.85rem; margin-left: 1rem;">
+                    <strong>Tip:</strong> Click nodes to highlight connections, drag to rearrange, scroll to zoom
+                </span>
+            </div>
+            <div class="network-container">
+                <svg id="network-svg"></svg>
+            </div>
+            <div class="network-legend">
+                <div class="network-legend-item">
+                    <div class="network-legend-dot person"></div>
+                    <span>People (names mentioned)</span>
                 </div>
-
-                <div class="sensational-words">
-                    <h3>Sensational Language</h3>
-                    <div id="sensational-list"></div>
+                <div class="network-legend-item">
+                    <div class="network-legend-dot place"></div>
+                    <span>Places (locations mentioned)</span>
+                </div>
+                <div class="network-legend-item">
+                    <svg width="30" height="2" style="margin-right: 0.5rem;">
+                        <line x1="0" y1="1" x2="30" y2="1" stroke="#999" stroke-width="2" />
+                    </svg>
+                    <span>Person-Place connection</span>
+                </div>
+                <div class="network-legend-item">
+                    <svg width="30" height="2" style="margin-right: 0.5rem;">
+                        <line x1="0" y1="1" x2="30" y2="1" stroke="#d4af37" stroke-width="2" stroke-dasharray="3,3" />
+                    </svg>
+                    <span>Person-Person connection</span>
+                </div>
+                <div class="network-legend-item">
+                    <span style="color: var(--color-ink-light);">
+                        Line thickness = number of co-occurrences
+                    </span>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Empire Context Section -->
-    <section id="empire-context" class="section section-dark">
-        <div class="container">
-            <div class="section-header">
-                <h2>Empire's Echo</h2>
-                <p class="section-subtitle">Whitechapel wasn't alone. What other British news arrived alongside the murders?</p>
-            </div>
-
-            <div id="empire-viz" class="empire-visualization">
-                <!-- Empire context visualization -->
-            </div>
-
-            <div class="content-block">
-                <p>The Whitechapel murders appeared within a broader stream of British Empire news&mdash;parliamentary debates, colonial affairs, royal announcements. Together, these articles constructed and maintained British identity in this anglophone corner of Quebec, linking the village to the metropolis through shared language, culture, and concern.</p>
+        <!-- Timeline -->
+        <div class="section">
+            <h2>Timeline: London to Shawville</h2>
+            <p style="margin-bottom: 2rem; color: var(--color-ink-light); font-style: italic;">
+                The London timeline shows events on a focused scale (August-November 1888) to reveal individual murders and investigations.
+                The Shawville timeline uses a broader scale (1888-1895) to show how coverage extended across years.
+            </p>
+            <div class="timeline" id="timeline">
+                <div class="loading">Loading timeline...</div>
             </div>
         </div>
-    </section>
 
-    <!-- Archive Browser Section -->
-    <section id="archive" class="section">
-        <div class="container">
-            <div class="section-header">
-                <h2>The Archive</h2>
-                <p class="section-subtitle">Explore all articles from The Equity, 1888-1895</p>
+        <!-- Articles -->
+        <div class="section">
+            <h2>The Articles</h2>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="whitechapel">Whitechapel/Ripper</button>
+                <button class="filter-btn" data-filter="burke">Burke & Hare</button>
+                <button class="filter-btn" data-filter="crime">General Crime</button>
+                <button class="filter-btn" data-filter="local-violence">Local Violence</button>
+                <button class="filter-btn" data-filter="all">All Articles</button>
             </div>
-
-            <div class="archive-controls">
-                <input type="text" id="search-input" placeholder="Search articles..." class="search-box">
-                <div class="filter-tags" id="filter-tags">
-                    <!-- Filter tags will be generated -->
-                </div>
-            </div>
-
-            <div id="article-grid" class="article-grid">
-                <!-- Articles will be rendered here -->
+            <div class="article-grid" id="articles">
+                <div class="loading">Loading articles...</div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Conclusion Section -->
-    <section id="conclusion" class="section">
-        <div class="container">
-            <div class="content-block conclusion">
-                <h2>Metropolis and Hinterland</h2>
-
-                <p class="lead">What, then, does Jack the Ripper mean to Shawville?</p>
-
-                <p>The Whitechapel articles in <em>The Equity</em> reveal the complex web connecting metropolis and hinterland in the late 19th century. They demonstrate how global news networks operated across vast distances, how sensational crime traveled through telegraph lines and steamship routes to reach rural readers within days or weeks of London events.</p>
-
-                <p>More profoundly, they show how British identity was constructed and reinforced in an anglophone community within French Canada. The murders weren't just news&mdash;they were shared cultural reference points, affirming connections to the mother country even as Canada built its own national identity.</p>
-
-                <p>These articles were indeed "motes of space-time"&mdash;moments when distant horror intruded into local life, when the violence of London's East End became conversation in Shawville's streets, when the metropolis reached into the hinterland and made itself felt.</p>
-
-                <p>In studying these intrusions, we glimpse the information networks, cultural anxieties, and colonial relationships that shaped life in rural Quebec at the turn of the 20th century.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Methodology & Citations -->
-    <section id="methodology" class="section section-light">
-        <div class="container">
-            <div class="content-block">
-                <h2>Methodology & Sources</h2>
-
-                <h3>Data Collection</h3>
-                <p>This project analyzes digitized issues of <em>The Equity</em> newspaper (1888-1895) from the Bibliothèque et Archives nationales du Québec (BAnQ). Seven newspaper issues containing references to Whitechapel were identified through BAnQ's digital search tools.</p>
-
-                <h3>Processing Pipeline</h3>
-                <p>PDFs were processed using Tesseract OCR for optical character recognition, followed by automated article segmentation, classification, and text analysis. The processing scripts are available in the project repository.</p>
-
-                <h3>Citations</h3>
-                <ul class="citations">
-                    <li><em>The Equity</em> (Shawville, Quebec), 1888-1895. Bibliothèque et Archives nationales du Québec (BAnQ).</li>
-                    <li>QAHN (Quebec Anglophone Heritage Network). "Shawville: Historic Hub of the Pontiac." <a href="https://qahn.org/article/shawville-historic-hub-pontiac" target="_blank">https://qahn.org/article/shawville-historic-hub-pontiac</a></li>
-                    <li>"History of Shawville." Municipality of Shawville. <a href="https://shawville.ca/municipality-of-shawville/history-of-shawville/" target="_blank">https://shawville.ca/municipality-of-shawville/history-of-shawville/</a></li>
-                    <li>"About The Equity." <em>The Equity</em>. <a href="https://theequity.ca/about-the-equity/" target="_blank">https://theequity.ca/about-the-equity/</a></li>
-                    <li>Sugden, Philip. <em>The Complete History of Jack the Ripper</em>. Carroll & Graf, 2002.</li>
-                </ul>
-
-                <h3>Project Credits</h3>
-                <p>Research and development: Dr. Shawn Graham<br>
-                Built with D3.js, Scrollama, and GSAP<br>
-                Source code available on GitHub</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 Whitechapel in Shawville. An exploration of digital history and newspaper archives.</p>
-        </div>
-    </footer>
-
-    <!-- Article Modal -->
-    <div id="article-modal" class="modal">
+    <!-- Modal -->
+    <div class="modal" id="modal">
         <div class="modal-content">
-            <span class="modal-close">&times;</span>
+            <button class="modal-close">&times;</button>
             <div id="modal-body"></div>
         </div>
     </div>
 
-    <!-- JavaScript -->
-    <script src="js/utils.js"></script>
-    <script src="js/timeline.js"></script>
-    <script src="js/newspaper-viewer.js"></script>
-    <script src="js/text-viz.js"></script>
-    <script src="js/browser.js"></script>
-    <script src="js/main.js"></script>
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Global state
+        let timelineData = null;
+        let articlesData = null;
+        let textAnalysisData = null;
+        let entitiesData = null; // Precomputed entities
+        let currentFilter = 'whitechapel';
+        let locationFilter = null;
+        let currentNetworkData = null; // Store current network data for CSV export
+        let currentSimulation = null; // Store D3 simulation for controls
+
+        // Helper: Detect Burke & Hare articles
+        function isBurkeHare(article) {
+            const text = article.full_text?.toLowerCase() || '';
+            const headline = article.headline?.toLowerCase() || '';
+            // Must mention both Burke AND Hare, or have body snatcher context
+            return ((text.includes('burke') && text.includes('hare')) ||
+                    (headline.includes('burke') || headline.includes('hare')) ||
+                    (text.includes('body') && text.includes('snatcher')));
+        }
+
+        // Helper: Detect local violence
+        function isLocalViolence(article) {
+            const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
+            const isLocal = article.tags?.some(t => t.tag === 'local_shawville');
+            const text = article.full_text?.toLowerCase() || '';
+            const violenceKeywords = ['murder', 'kill', 'assault', 'attack', 'shot', 'stabbed', 'beaten'];
+            return !isWhitechapel && isLocal && violenceKeywords.some(k => text.includes(k));
+        }
+
+        // Helper: Detect general crime
+        function isGeneralCrime(article) {
+            const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
+            if (isWhitechapel || isBurkeHare(article)) return false;
+            return article.tags?.some(t => t.tag === 'crime_general');
+        }
+
+        // Helper: Extract locations mentioned in article
+        function extractLocations(article) {
+            // Use precomputed entities if available
+            if (entitiesData && entitiesData.article_entities) {
+                const articleEntities = entitiesData.article_entities[article.article_id];
+                if (articleEntities && articleEntities.places) {
+                    return articleEntities.places;
+                }
+            }
+
+            // Fallback to regex extraction
+            const text = (article.full_text || '').toLowerCase();
+            const headline = (article.headline || '').toLowerCase();
+            const combined = text + ' ' + headline;
+
+            const locations = [];
+            const locationPatterns = {
+                // Major international cities
+                'London': /\blondon\b/i,
+                'Whitechapel': /\bwhitechapel\b/i,
+                'Edinburgh': /\bedinburgh\b/i,
+                'Paris': /\bparis\b/i,
+                'New York': /\bnew york\b/i,
+                'United States': /\bunited states\b/i,
+
+                // Countries and regions
+                'England': /\bengland\b/i,
+                'Scotland': /\bscotland\b/i,
+                'Ireland': /\bireland\b/i,
+
+                // Canadian major cities
+                'Ottawa': /\bottawa\b/i,
+                'Toronto': /\btoronto\b/i,
+                'Montreal': /\bmontreal\b/i,
+                'Quebec City': /\bquebec city\b/i,
+                'Quebec': /\bquebec\b/i,
+
+                // Pontiac County and nearby communities
+                'Shawville': /\bshawville\b/i,
+                'Pontiac': /\bpontiac\b/i,
+                'Aylmer': /\baylmer\b/i,
+                'Hull': /\bhull\b/i,
+                'Bryson': /\bbryson\b/i,
+                'Campbell\'s Bay': /\bcampbell'?s?\s+bay\b/i,
+                'Fort Coulonge': /\bfort\s+coulonge\b/i,
+                'Portage-du-Fort': /\bportage[- ]du[- ]fort\b/i,
+                'Quyon': /\bquyon\b/i,
+                'Bristol': /\bbristol\b/i,
+                'Litchfield': /\blitchfield\b/i,
+                'Clarendon': /\bclarendon\b/i,
+                'Thorne': /\bthorne\b/i,
+                'Alleyn': /\balleyn\b/i,
+                'Calumet': /\bcalumet\b/i,
+                'Chapeau': /\bchapeau\b/i,
+                'Norway Bay': /\bnorway\s+bay\b/i,
+                'Pembroke': /\bpembroke\b/i,
+                'Renfrew': /\brenfrew\b/i,
+                'Arnprior': /\barnprior\b/i,
+                'Eganville': /\beganville\b/i
+            };
+
+            for (const [location, pattern] of Object.entries(locationPatterns)) {
+                if (pattern.test(combined)) {
+                    locations.push(location);
+                }
+            }
+
+            return locations;
+        }
+
+        // Helper: Extract person names from article
+        function extractPeople(article) {
+            // Use precomputed entities if available
+            if (entitiesData && entitiesData.article_entities) {
+                const articleEntities = entitiesData.article_entities[article.article_id];
+                if (articleEntities && articleEntities.people) {
+                    return articleEntities.people;
+                }
+            }
+
+            // Fallback to regex extraction
+            const text = article.full_text || '';
+            const headline = article.headline || '';
+            const combined = text + ' ' + headline;
+
+            const people = new Set();
+
+            // Known names from Whitechapel murders
+            const knownNames = {
+                'Jack': /\bjack\b.*\bripper\b/i,
+                'Jack the Ripper': /\bjack\s+(?:the\s+)?ripper\b/i,
+                'Mary Ann Nichols': /\bmary\s+ann\s+nichols\b/i,
+                'Annie Chapman': /\bannie\s+chapman\b/i,
+                'Elizabeth Stride': /\belizabeth\s+stride\b/i,
+                'Catherine Eddowes': /\bcatherine\s+eddowes\b/i,
+                'Mary Jane Kelly': /\bmary\s+jane\s+kelly\b/i,
+                'Burke': /\bburke\b/i,
+                'Hare': /\bhare\b/i,
+                'Dr. Burke': /\bdr\.?\s+burke\b/i,
+                'William Burke': /\bwilliam\s+burke\b/i
+            };
+
+            for (const [name, pattern] of Object.entries(knownNames)) {
+                if (pattern.test(combined)) {
+                    people.add(name);
+                }
+            }
+
+            // Extract capitalized multi-word names (2-3 words)
+            // Pattern: Capital Letter + lowercase letters, repeated 2-3 times
+            const namePattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g;
+            let match;
+
+            const stopWords = new Set([
+                'The', 'This', 'That', 'These', 'Those', 'He', 'She', 'His', 'Her',
+                'They', 'Their', 'What', 'When', 'Where', 'Who', 'Why', 'How',
+                'There', 'Here', 'Then', 'Now', 'Very', 'More', 'Most', 'Some',
+                'Many', 'Such', 'Other', 'Another', 'Each', 'Every', 'All', 'Both',
+                'New York', 'United States', 'Great Britain', 'North America',
+                'Last Week', 'Last Night', 'Next Week', 'Next Month',
+                'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December',
+                // Article metadata and common phrases to exclude
+                'Untitled Snippet', 'Article From', 'The Equity', 'Per Cent', 'Last Year',
+                'Next Year', 'This Week', 'This Month', 'This Year', 'Last Month',
+                'Young Man', 'Old Man', 'The Man', 'The Woman', 'The Girl', 'The Boy',
+                'Police Station', 'Post Office', 'City Hall', 'Town Hall', 'Main Street'
+            ]);
+
+            while ((match = namePattern.exec(combined)) !== null) {
+                const name = match[1];
+                if (!stopWords.has(name) && name.length > 4) {
+                    people.add(name);
+                }
+            }
+
+            return Array.from(people).slice(0, 10); // Limit to top 10 per article
+        }
+
+        // Build network data from articles
+        function buildNetworkData(articles) {
+            const nodes = new Map();
+            const links = new Map();
+
+            articles.forEach(article => {
+                const people = extractPeople(article);
+                const places = extractLocations(article);
+
+                // Create person nodes
+                people.forEach(person => {
+                    if (!nodes.has(person)) {
+                        nodes.set(person, { id: person, type: 'person', count: 0 });
+                    }
+                    nodes.get(person).count++;
+                });
+
+                // Create place nodes
+                places.forEach(place => {
+                    if (!nodes.has(place)) {
+                        nodes.set(place, { id: place, type: 'place', count: 0 });
+                    }
+                    nodes.get(place).count++;
+                });
+
+                // Create links between people and places in same article
+                people.forEach(person => {
+                    places.forEach(place => {
+                        const linkId = `${person}|${place}`;
+                        if (!links.has(linkId)) {
+                            links.set(linkId, {
+                                source: person,
+                                target: place,
+                                value: 0,
+                                linkType: 'person-place'
+                            });
+                        }
+                        links.get(linkId).value++;
+                    });
+                });
+
+                // Create links between people mentioned in same article
+                for (let i = 0; i < people.length; i++) {
+                    for (let j = i + 1; j < people.length; j++) {
+                        const person1 = people[i];
+                        const person2 = people[j];
+                        // Sort names to create consistent link IDs
+                        const [source, target] = [person1, person2].sort();
+                        const linkId = `${source}|${target}`;
+
+                        if (!links.has(linkId)) {
+                            links.set(linkId, {
+                                source: source,
+                                target: target,
+                                value: 0,
+                                linkType: 'person-person'
+                            });
+                        }
+                        links.get(linkId).value++;
+                    }
+                }
+            });
+
+            // Filter to keep only nodes with meaningful connections (at least 2 mentions)
+            const nodesArray = Array.from(nodes.values()).filter(n => n.count >= 2);
+            const nodeIds = new Set(nodesArray.map(n => n.id));
+            const linksArray = Array.from(links.values())
+                .filter(l => nodeIds.has(l.source) && nodeIds.has(l.target))
+                .filter(l => l.value >= 1);
+
+            return { nodes: nodesArray, links: linksArray };
+        }
+
+        // Download network as CSV
+        function downloadNetworkCSV() {
+            if (!currentNetworkData || !currentNetworkData.links) {
+                alert('No network data available to download');
+                return;
+            }
+
+            // Build CSV content
+            let csv = 'source,target,type,weight\n';
+            currentNetworkData.links.forEach(link => {
+                const source = typeof link.source === 'object' ? link.source.id : link.source;
+                const target = typeof link.target === 'object' ? link.target.id : link.target;
+                const type = link.linkType || 'unknown';
+                csv += `"${source}","${target}","${type}",${link.value}\n`;
+            });
+
+            // Create download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'social-network.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Load data
+        async function loadData() {
+            try {
+                // Try to load precomputed entities (optional)
+                try {
+                    const entities = await fetch('data/processed/entities.json').then(r => r.json());
+                    entitiesData = entities;
+                    console.log('Loaded precomputed entities:', entitiesData);
+                    console.log('Using NER-based entity extraction');
+                } catch (e) {
+                    console.log('No precomputed entities found, using regex fallback');
+                    entitiesData = null;
+                }
+
+                const [timeline, articles, textAnalysis] = await Promise.all([
+                    fetch('data/processed/timeline.json').then(r => r.json()),
+                    fetch('data/processed/tagged_articles.json').then(r => r.json()),
+                    fetch('data/processed/text_analysis.json').then(r => r.json())
+                ]);
+
+                timelineData = timeline;
+                articlesData = articles.articles;
+                textAnalysisData = textAnalysis;
+
+                console.log('Loaded timeline:', timeline);
+                console.log('Loaded articles:', articlesData.length);
+                console.log('Loaded text analysis:', textAnalysis);
+
+                renderStats();
+                renderWordCloud();
+                renderGeoMap();
+                renderNetwork('all');
+                renderTimeline();
+                renderArticles();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('timeline').innerHTML = '<p style="color: red;">Error loading data. Check console.</p>';
+            }
+        }
+
+        // Render statistics
+        function renderStats() {
+            const whitechapelArticles = articlesData.filter(a => a.is_whitechapel || a.is_ripper_related);
+            const burkeHareArticles = articlesData.filter(isBurkeHare);
+            const crimeArticles = articlesData.filter(isGeneralCrime);
+            const localViolenceArticles = articlesData.filter(isLocalViolence);
+
+            const pages = new Set(whitechapelArticles.map(a => `${a.source_pdf}_p${a.page_number}`)).size;
+            const avgDelay = timelineData.shawville_events.reduce((sum, e) => sum + e.time_lag_days, 0) / timelineData.shawville_events.length;
+
+            document.getElementById('stat-london').textContent = timelineData.london_events.length;
+            document.getElementById('stat-shawville').textContent = timelineData.shawville_events.length;
+            document.getElementById('stat-pages').textContent = pages;
+            document.getElementById('stat-days').textContent = Math.round(avgDelay);
+
+            // Crime comparison stats
+            document.getElementById('stat-whitechapel').textContent = whitechapelArticles.length;
+            document.getElementById('stat-burke').textContent = burkeHareArticles.length;
+            document.getElementById('stat-crime').textContent = crimeArticles.length;
+            document.getElementById('stat-local-violence').textContent = localViolenceArticles.length;
+        }
+
+        // Render word cloud
+        function renderWordCloud() {
+            const container = document.getElementById('word-cloud');
+
+            // Get top 50 words from word cloud data
+            const words = textAnalysisData.word_cloud_data.slice(0, 50);
+
+            // Calculate font size range
+            const maxSize = words[0].size;
+            const minSize = words[words.length - 1].size;
+
+            let html = '';
+            words.forEach(word => {
+                // Scale font size from 0.9rem to 3.5rem with more dramatic variation
+                const scale = (word.size - minSize) / (maxSize - minSize);
+                const fontSize = 0.9 + (scale * 2.6);
+                const opacity = 0.6 + (scale * 0.4);
+
+                html += `<span style="font-size: ${fontSize}rem; opacity: ${opacity};"
+                              title="${word.text}: ${word.size} occurrences">${word.text}</span>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Render geographic map
+        function renderGeoMap() {
+            const container = document.getElementById('geo-map');
+
+            // Count articles by location
+            const locationCounts = {};
+            articlesData.forEach(article => {
+                const locations = extractLocations(article);
+                locations.forEach(loc => {
+                    locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+                });
+            });
+
+            // Sort and group key locations
+            const keyLocations = [
+                { name: 'London/Whitechapel', key: 'london', desc: 'Ripper murders & British news',
+                  count: (locationCounts['London'] || 0) + (locationCounts['Whitechapel'] || 0) },
+                { name: 'Edinburgh', key: 'edinburgh', desc: 'Burke & Hare historical murders',
+                  count: locationCounts['Edinburgh'] || 0 },
+                { name: 'Shawville', key: 'shawville', desc: 'Local Pontiac County news',
+                  count: locationCounts['Shawville'] || 0 },
+                { name: 'United States', key: 'international', desc: 'American news & events',
+                  count: locationCounts['United States'] || 0 },
+                { name: 'Canadian Cities', key: 'canadian', desc: 'Ottawa, Montreal, Toronto, Quebec',
+                  count: (locationCounts['Ottawa'] || 0) + (locationCounts['Montreal'] || 0) +
+                         (locationCounts['Toronto'] || 0) + (locationCounts['Quebec'] || 0) }
+            ];
+
+            const maxCount = Math.max(...keyLocations.map(l => l.count));
+
+            let html = '';
+            keyLocations.forEach(location => {
+                const percentage = (location.count / maxCount) * 100;
+                html += `
+                    <div class="location-box ${location.key}" data-location="${location.name}">
+                        <div class="location-name">${location.name}</div>
+                        <div class="location-count">${location.count}</div>
+                        <div class="location-desc">${location.desc}</div>
+                        <div class="location-bar">
+                            <div class="location-bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Add click handlers to filter by location
+            document.querySelectorAll('.location-box').forEach(box => {
+                box.addEventListener('click', () => {
+                    const location = box.dataset.location;
+                    filterByLocation(location);
+                });
+            });
+        }
+
+        // Filter articles by location
+        function filterByLocation(location) {
+            locationFilter = location;
+            currentFilter = 'location';
+
+            // Update filter button display
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+
+            renderArticles();
+
+            // Scroll to articles section
+            document.getElementById('articles').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Render network visualization
+        function renderNetwork(filter = 'all') {
+            const svg = d3.select('#network-svg');
+            svg.selectAll('*').remove(); // Clear existing
+
+            const width = svg.node().clientWidth;
+            const height = 600;
+
+            // Filter articles based on selection
+            let filteredArticles = articlesData;
+            if (filter === 'whitechapel') {
+                filteredArticles = articlesData.filter(a => a.is_whitechapel || a.is_ripper_related);
+            } else if (filter === 'burke') {
+                filteredArticles = articlesData.filter(isBurkeHare);
+            }
+
+            // Build network data
+            const { nodes, links } = buildNetworkData(filteredArticles);
+
+            // Store for CSV export
+            currentNetworkData = { nodes, links };
+
+            console.log(`Network: ${nodes.length} nodes, ${links.length} links`);
+
+            if (nodes.length === 0) {
+                svg.append('text')
+                    .attr('x', width / 2)
+                    .attr('y', height / 2)
+                    .attr('text-anchor', 'middle')
+                    .text('No network data available for this filter')
+                    .style('fill', '#999');
+                currentNetworkData = null;
+                return;
+            }
+
+            // Create zoom behavior
+            const g = svg.append('g');
+
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Store initial transform for reset
+            const initialTransform = d3.zoomIdentity.translate(0, 0).scale(1);
+
+            // Create force simulation
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.count) * 5 + 10));
+
+            // Store simulation for controls
+            currentSimulation = simulation;
+
+            // Create link elements
+            const link = g.append('g')
+                .selectAll('line')
+                .data(links)
+                .join('line')
+                .attr('class', d => `network-link ${d.linkType}`)
+                .attr('stroke-width', d => Math.sqrt(d.value) * 0.5);
+
+            // Create node elements
+            const node = g.append('g')
+                .selectAll('circle')
+                .data(nodes)
+                .join('circle')
+                .attr('class', d => `network-node ${d.type}`)
+                .attr('r', d => Math.sqrt(d.count) * 3 + 5)
+                .attr('stroke-width', 2)
+                .call(drag(simulation));
+
+            // Add labels
+            const label = g.append('g')
+                .selectAll('text')
+                .data(nodes)
+                .join('text')
+                .attr('class', 'network-label')
+                .attr('text-anchor', 'middle')
+                .attr('dy', d => Math.sqrt(d.count) * 3 + 18)
+                .text(d => d.id);
+
+            // Add interactivity
+            node.on('click', function(event, d) {
+                // Highlight connected nodes
+                const connectedNodes = new Set();
+                connectedNodes.add(d.id);
+
+                links.forEach(l => {
+                    if (l.source.id === d.id) connectedNodes.add(l.target.id);
+                    if (l.target.id === d.id) connectedNodes.add(l.source.id);
+                });
+
+                node.style('opacity', n => connectedNodes.has(n.id) ? 1 : 0.1);
+                link.style('opacity', l =>
+                    l.source.id === d.id || l.target.id === d.id ? 0.6 : 0.05
+                );
+                label.style('opacity', n => connectedNodes.has(n.id) ? 1 : 0.1);
+            });
+
+            svg.on('click', function(event) {
+                if (event.target === this) {
+                    // Reset on background click
+                    node.style('opacity', 1);
+                    link.style('opacity', 0.3);
+                    label.style('opacity', 1);
+                }
+            });
+
+            // Setup reset zoom button
+            d3.select('#reset-zoom-btn').on('click', function() {
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    initialTransform
+                );
+            });
+
+            // Add tooltip
+            node.on('mouseover', function(event, d) {
+                const tooltip = d3.select('#tooltip');
+                tooltip.html(`
+                    <strong>${d.id}</strong><br>
+                    Type: ${d.type}<br>
+                    Mentions: ${d.count}
+                `);
+                tooltip.style('display', 'block')
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY + 10) + 'px');
+            });
+
+            node.on('mouseout', function() {
+                d3.select('#tooltip').style('display', 'none');
+            });
+
+            // Update positions on tick
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+
+            // Drag behavior
+            function drag(simulation) {
+                function dragstarted(event) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    event.subject.fx = event.subject.x;
+                    event.subject.fy = event.subject.y;
+                }
+
+                function dragged(event) {
+                    event.subject.fx = event.x;
+                    event.subject.fy = event.y;
+                }
+
+                function dragended(event) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                }
+
+                return d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended);
+            }
+        }
+
+        // Render timeline
+        function renderTimeline() {
+            const container = document.getElementById('timeline');
+
+            // Get separate date ranges for London and Shawville
+            const londonDates = timelineData.london_events.map(e => new Date(e.date));
+            const shawvilleDates = timelineData.shawville_events.map(e => new Date(e.date));
+
+            const londonMinDate = new Date(Math.min(...londonDates));
+            const londonMaxDate = new Date(Math.max(...londonDates));
+            const londonDateRange = londonMaxDate - londonMinDate;
+
+            const allDates = [...londonDates, ...shawvilleDates];
+            const globalMinDate = new Date(Math.min(...allDates));
+            const globalMaxDate = new Date(Math.max(...allDates));
+            const globalDateRange = globalMaxDate - globalMinDate;
+
+            // Build HTML
+            let html = '';
+
+            // London track - uses its own focused scale
+            html += '<div class="timeline-track">';
+            html += '<div class="timeline-label london">London Events <small style="opacity: 0.7;">(Aug-Nov 1888)</small></div>';
+            html += '<div class="timeline-line"></div>';
+            html += '<div class="timeline-events">';
+            timelineData.london_events.forEach(event => {
+                const date = new Date(event.date);
+                // Use London-specific scale to spread out the events
+                const position = ((date - londonMinDate) / londonDateRange) * 100;
+                const className = event.type === 'murder' ? 'murder' : 'london';
+                html += `
+                    <div class="timeline-event" style="left: ${position}%"
+                         data-event="${event.id}"
+                         data-type="london">
+                        <div class="event-marker ${className}"></div>
+                        <div class="event-label">${event.title}</div>
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+
+            // Shawville track - uses global scale to show time lag
+            html += '<div class="timeline-track" style="margin-top: 3rem;">';
+            html += '<div class="timeline-label shawville">Shawville Publications <small style="opacity: 0.7;">(1888-1895)</small></div>';
+            html += '<div class="timeline-line"></div>';
+            html += '<div class="timeline-events">';
+            timelineData.shawville_events.forEach(event => {
+                const date = new Date(event.date);
+                // Use global scale to show distribution over time
+                const position = ((date - globalMinDate) / globalDateRange) * 100;
+                html += `
+                    <div class="timeline-event" style="left: ${position}%"
+                         data-event="${event.article_id}"
+                         data-type="shawville">
+                        <div class="event-marker shawville"></div>
+                        <div class="event-label">${event.date_display}</div>
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+
+            container.innerHTML = html;
+
+            // Add event listeners
+            document.querySelectorAll('.timeline-event').forEach(el => {
+                el.addEventListener('mouseenter', showTooltip);
+                el.addEventListener('mouseleave', hideTooltip);
+                el.addEventListener('click', handleTimelineClick);
+            });
+        }
+
+        // Show tooltip
+        function showTooltip(e) {
+            const eventId = e.currentTarget.dataset.event;
+            const eventType = e.currentTarget.dataset.type;
+            const tooltip = document.getElementById('tooltip');
+
+            let content = '';
+            if (eventType === 'london') {
+                const event = timelineData.london_events.find(ev => ev.id === eventId);
+                content = `
+                    <strong>${event.title}</strong><br>
+                    ${event.date}<br>
+                    ${event.location}<br>
+                    <em>${event.description}</em>
+                `;
+            } else {
+                const event = timelineData.shawville_events.find(ev => ev.article_id === eventId);
+                content = `
+                    <strong>The Equity</strong><br>
+                    ${event.date_display}<br>
+                    ${event.time_lag_days} days after ${event.correlated_event}
+                `;
+            }
+
+            tooltip.innerHTML = content;
+            tooltip.classList.add('visible');
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.bottom + 10) + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').classList.remove('visible');
+        }
+
+        // Handle timeline click
+        function handleTimelineClick(e) {
+            const eventId = e.currentTarget.dataset.event;
+            const eventType = e.currentTarget.dataset.type;
+
+            if (eventType === 'shawville') {
+                const article = articlesData.find(a => a.article_id === eventId);
+                if (article) showArticleModal(article);
+            }
+        }
+
+        // Render articles
+        function renderArticles() {
+            const container = document.getElementById('articles');
+            let filtered = articlesData;
+
+            // Apply filter
+            if (currentFilter === 'whitechapel') {
+                filtered = articlesData.filter(a => a.is_whitechapel || a.is_ripper_related);
+            } else if (currentFilter === 'burke') {
+                filtered = articlesData.filter(isBurkeHare);
+            } else if (currentFilter === 'crime') {
+                filtered = articlesData.filter(isGeneralCrime);
+            } else if (currentFilter === 'local-violence') {
+                filtered = articlesData.filter(isLocalViolence);
+            } else if (currentFilter === 'location' && locationFilter) {
+                filtered = articlesData.filter(a => {
+                    const locations = extractLocations(a);
+                    // Handle grouped locations
+                    if (locationFilter === 'London/Whitechapel') {
+                        return locations.includes('London') || locations.includes('Whitechapel');
+                    } else if (locationFilter === 'Canadian Cities') {
+                        return locations.some(l => ['Ottawa', 'Montreal', 'Toronto', 'Quebec'].includes(l));
+                    } else {
+                        return locations.includes(locationFilter);
+                    }
+                });
+            }
+
+            // Sort by date
+            filtered.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+            // Add filter heading
+            let filterHeading = '';
+            if (currentFilter === 'location' && locationFilter) {
+                filterHeading = `<p style="margin-bottom: 1rem; color: var(--color-ripper); font-weight: bold;">
+                    Showing ${filtered.length} articles mentioning: ${locationFilter}
+                    <button onclick="currentFilter='whitechapel'; locationFilter=null; renderArticles();"
+                            style="margin-left: 1rem; padding: 0.5rem 1rem; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 4px;">
+                        Clear filter
+                    </button>
+                </p>`;
+            }
+
+            let html = filterHeading;
+            filtered.forEach(article => {
+                const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
+                const isBH = isBurkeHare(article);
+                const isLV = isLocalViolence(article);
+
+                let badgeHtml = '';
+                let cardClass = '';
+                if (isWhitechapel) {
+                    badgeHtml = '<div class="badge" style="background: var(--color-ripper);">Whitechapel/Ripper</div>';
+                    cardClass = 'whitechapel';
+                } else if (isBH) {
+                    badgeHtml = '<div class="badge" style="background: #8B4513;">Burke & Hare</div>';
+                    cardClass = 'burke-hare';
+                } else if (isLV) {
+                    badgeHtml = '<div class="badge" style="background: var(--color-shawville);">Local Violence</div>';
+                    cardClass = 'local-violence';
+                }
+
+                html += `
+                    <div class="article-card ${cardClass}"
+                         data-id="${article.article_id}">
+                        ${badgeHtml}
+                        <h3>${article.headline || 'Untitled'}</h3>
+                        <div class="meta">
+                            ${article.date || 'Unknown date'} |
+                            Page ${article.page_number} |
+                            ${article.word_count} words
+                        </div>
+                        <div class="snippet">
+                            ${article.full_text?.substring(0, 150)}${article.full_text?.length > 150 ? '...' : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html || '<p>No articles match this filter.</p>';
+
+            // Add click listeners
+            document.querySelectorAll('.article-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const article = articlesData.find(a => a.article_id === card.dataset.id);
+                    showArticleModal(article);
+                });
+            });
+        }
+
+        // Show article modal
+        function showArticleModal(article) {
+            const modal = document.getElementById('modal');
+            const body = document.getElementById('modal-body');
+
+            const isWhitechapel = article.is_whitechapel || article.is_ripper_related;
+            const imagePath = `data/preprocessed/${article.source_pdf}/${article.article_id}.jpg`;
+            const locations = extractLocations(article);
+
+            // Format locations as badges
+            let locationBadges = '';
+            if (locations.length > 0) {
+                locationBadges = '<div style="margin: 1rem 0;"><strong>Locations mentioned:</strong> ';
+                locations.forEach(loc => {
+                    locationBadges += `<span style="display: inline-block; background: #e8e8e8; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 3px; font-size: 0.85rem;">${loc}</span>`;
+                });
+                locationBadges += '</div>';
+            }
+
+            body.innerHTML = `
+                ${isWhitechapel ? '<div class="badge" style="margin-bottom: 1rem;">Whitechapel/Ripper Content</div>' : ''}
+                <h2>${article.headline || 'Article from The Equity'}</h2>
+                <div class="meta">
+                    <strong>Date:</strong> ${article.date || 'Unknown'} |
+                    <strong>Page:</strong> ${article.page_number} |
+                    <strong>Column:</strong> ${article.column} |
+                    <strong>Words:</strong> ${article.word_count}
+                </div>
+                ${locationBadges}
+                <img src="${imagePath}"
+                     alt="Article snippet"
+                     style="max-width: 100%; margin: 1rem 0; display: none;"
+                     onload="this.style.display='block';"
+                     onerror="this.style.display='none';">
+                <h3 style="margin-top: 1.5rem;">OCR Transcription</h3>
+                <div class="text">${article.full_text}</div>
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd; font-size: 0.85rem; color: #999;">
+                    Source: ${article.source_pdf} | ID: ${article.article_id}
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        // Close modal
+        document.querySelector('.modal-close').addEventListener('click', () => {
+            document.getElementById('modal').classList.remove('active');
+        });
+
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') {
+                document.getElementById('modal').classList.remove('active');
+            }
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderArticles();
+            });
+        });
+
+        // Network filter buttons
+        document.querySelectorAll('.network-control-btn[data-network-filter]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.network-control-btn[data-network-filter]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filter = btn.dataset.networkFilter;
+                renderNetwork(filter);
+            });
+        });
+
+        // CSV download button
+        document.getElementById('download-csv-btn').addEventListener('click', downloadNetworkCSV);
+
+        // Initialize
+        loadData();
+    </script>
 </body>
 </html>
