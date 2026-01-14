@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Whitechapel in Shawville | Interactive Exploration</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * {
@@ -23,10 +29,11 @@
         }
 
         body {
-            font-family: Georgia, 'Times New Roman', serif;
+            font-family: 'Crimson Text', Georgia, 'Times New Roman', serif;
             background: var(--color-bg);
             color: var(--color-ink);
-            line-height: 1.6;
+            line-height: 1.7;
+            font-size: 18px;
         }
 
         header {
@@ -37,10 +44,19 @@
         }
 
         h1 {
-            font-size: 3rem;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 3.5rem;
             font-weight: 900;
             margin-bottom: 0.5rem;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.02em;
+        }
+
+        h2, h3 {
+            font-family: 'Playfair Display', Georgia, serif;
+        }
+
+        h2 {
+            font-weight: 700;
         }
 
         .subtitle {
@@ -343,22 +359,45 @@
         /* Word Cloud */
         .word-cloud {
             text-align: center;
-            padding: 2rem;
-            line-height: 2.5;
+            padding: 3rem 2rem;
+            line-height: 3;
+            background: linear-gradient(135deg, #fdfbf7 0%, #f9f6ef 100%);
+            border-radius: 8px;
         }
 
         .word-cloud span {
             display: inline-block;
-            margin: 0.5rem;
-            padding: 0.25rem 0.5rem;
+            margin: 0.75rem;
+            padding: 0.5rem 0.75rem;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             color: var(--color-ink);
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .word-cloud span::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--color-ripper);
+            transition: all 0.3s;
+            transform: translateX(-50%);
         }
 
         .word-cloud span:hover {
             color: var(--color-ripper);
-            transform: scale(1.1);
+            transform: scale(1.15) translateY(-2px);
+            text-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
+        }
+
+        .word-cloud span:hover::before {
+            width: 100%;
         }
 
         /* Geographic Map */
@@ -460,6 +499,17 @@
         }
 
         .network-link {
+            stroke: #999;
+            stroke-opacity: 0.3;
+        }
+
+        .network-link.person-person {
+            stroke: #d4af37;
+            stroke-opacity: 0.4;
+            stroke-dasharray: 3,3;
+        }
+
+        .network-link.person-place {
             stroke: #999;
             stroke-opacity: 0.3;
         }
@@ -618,9 +668,9 @@
 
         <!-- Word Cloud -->
         <div class="section">
-            <h2>Language of Horror</h2>
-            <p style="margin-bottom: 1rem; color: var(--color-ink-light);">
-                Most frequent words in Whitechapel/Ripper articles (hover to see frequency)
+            <h2>The Language of Horror</h2>
+            <p style="margin-bottom: 1.5rem; color: var(--color-ink-light); font-style: italic; font-size: 1.1rem;">
+                What words defined the Ripper coverage? These are the most frequent terms from Whitechapel articles—hover to see how many times each appeared.
             </p>
             <div class="word-cloud" id="word-cloud">
                 <div class="loading">Loading word cloud...</div>
@@ -642,8 +692,9 @@
         <div class="section">
             <h2>People & Places Network</h2>
             <p style="margin-bottom: 1rem; color: var(--color-ink-light);">
-                Who was connected to where? People (red) and places (green) are linked when mentioned in the same article.
-                Node size reflects how frequently they appear together.
+                Who was connected to where, and to whom? This network shows people (red) and places (green) mentioned together in articles.
+                Solid lines connect people to places, while dashed gold lines show people mentioned together.
+                Node size reflects frequency of mentions.
             </p>
             <div class="network-controls">
                 <button class="network-control-btn active" data-network-filter="all">All Connections</button>
@@ -668,6 +719,18 @@
                     <span>Places (locations mentioned)</span>
                 </div>
                 <div class="network-legend-item">
+                    <svg width="30" height="2" style="margin-right: 0.5rem;">
+                        <line x1="0" y1="1" x2="30" y2="1" stroke="#999" stroke-width="2" />
+                    </svg>
+                    <span>Person-Place connection</span>
+                </div>
+                <div class="network-legend-item">
+                    <svg width="30" height="2" style="margin-right: 0.5rem;">
+                        <line x1="0" y1="1" x2="30" y2="1" stroke="#d4af37" stroke-width="2" stroke-dasharray="3,3" />
+                    </svg>
+                    <span>Person-Person connection</span>
+                </div>
+                <div class="network-legend-item">
                     <span style="color: var(--color-ink-light);">
                         Line thickness = number of co-occurrences
                     </span>
@@ -678,6 +741,10 @@
         <!-- Timeline -->
         <div class="section">
             <h2>Timeline: London to Shawville</h2>
+            <p style="margin-bottom: 2rem; color: var(--color-ink-light); font-style: italic;">
+                The London timeline shows events on a focused scale (August-November 1888) to reveal individual murders and investigations.
+                The Shawville timeline uses a broader scale (1888-1895) to show how coverage extended across years.
+            </p>
             <div class="timeline" id="timeline">
                 <div class="loading">Loading timeline...</div>
             </div>
@@ -764,19 +831,48 @@
 
             const locations = [];
             const locationPatterns = {
+                // Major international cities
                 'London': /\blondon\b/i,
                 'Whitechapel': /\bwhitechapel\b/i,
                 'Edinburgh': /\bedinburgh\b/i,
                 'Paris': /\bparis\b/i,
+                'New York': /\bnew york\b/i,
                 'United States': /\bunited states\b/i,
+
+                // Countries and regions
                 'England': /\bengland\b/i,
                 'Scotland': /\bscotland\b/i,
                 'Ireland': /\bireland\b/i,
+
+                // Canadian major cities
                 'Ottawa': /\bottawa\b/i,
                 'Toronto': /\btoronto\b/i,
                 'Montreal': /\bmontreal\b/i,
+                'Quebec City': /\bquebec city\b/i,
                 'Quebec': /\bquebec\b/i,
-                'Shawville': /\bshawville\b/i
+
+                // Pontiac County and nearby communities
+                'Shawville': /\bshawville\b/i,
+                'Pontiac': /\bpontiac\b/i,
+                'Aylmer': /\baylmer\b/i,
+                'Hull': /\bhull\b/i,
+                'Bryson': /\bbryson\b/i,
+                'Campbell\'s Bay': /\bcampbell'?s?\s+bay\b/i,
+                'Fort Coulonge': /\bfort\s+coulonge\b/i,
+                'Portage-du-Fort': /\bportage[- ]du[- ]fort\b/i,
+                'Quyon': /\bquyon\b/i,
+                'Bristol': /\bbristol\b/i,
+                'Litchfield': /\blitchfield\b/i,
+                'Clarendon': /\bclarendon\b/i,
+                'Thorne': /\bthorne\b/i,
+                'Alleyn': /\balleyn\b/i,
+                'Calumet': /\bcalumet\b/i,
+                'Chapeau': /\bchapeau\b/i,
+                'Norway Bay': /\bnorway\s+bay\b/i,
+                'Pembroke': /\bpembroke\b/i,
+                'Renfrew': /\brenfrew\b/i,
+                'Arnprior': /\barnprior\b/i,
+                'Eganville': /\beganville\b/i
             };
 
             for (const [location, pattern] of Object.entries(locationPatterns)) {
@@ -886,16 +982,42 @@
                 // Create links between people and places in same article
                 people.forEach(person => {
                     places.forEach(place => {
-                        const linkId = `${person}-${place}`;
+                        const linkId = `${person}|${place}`;
                         if (!links.has(linkId)) {
-                            links.set(linkId, { source: person, target: place, value: 0 });
+                            links.set(linkId, {
+                                source: person,
+                                target: place,
+                                value: 0,
+                                linkType: 'person-place'
+                            });
                         }
                         links.get(linkId).value++;
                     });
                 });
+
+                // Create links between people mentioned in same article
+                for (let i = 0; i < people.length; i++) {
+                    for (let j = i + 1; j < people.length; j++) {
+                        const person1 = people[i];
+                        const person2 = people[j];
+                        // Sort names to create consistent link IDs
+                        const [source, target] = [person1, person2].sort();
+                        const linkId = `${source}|${target}`;
+
+                        if (!links.has(linkId)) {
+                            links.set(linkId, {
+                                source: source,
+                                target: target,
+                                value: 0,
+                                linkType: 'person-person'
+                            });
+                        }
+                        links.get(linkId).value++;
+                    }
+                }
             });
 
-            // Filter to keep only nodes with meaningful connections
+            // Filter to keep only nodes with meaningful connections (at least 2 mentions)
             const nodesArray = Array.from(nodes.values()).filter(n => n.count >= 2);
             const nodeIds = new Set(nodesArray.map(n => n.id));
             const linksArray = Array.from(links.values())
@@ -917,9 +1039,7 @@
             currentNetworkData.links.forEach(link => {
                 const source = typeof link.source === 'object' ? link.source.id : link.source;
                 const target = typeof link.target === 'object' ? link.target.id : link.target;
-                const sourceType = currentNetworkData.nodes.find(n => n.id === source)?.type || 'unknown';
-                const targetType = currentNetworkData.nodes.find(n => n.id === target)?.type || 'unknown';
-                const type = `${sourceType}-${targetType}`;
+                const type = link.linkType || 'unknown';
                 csv += `"${source}","${target}","${type}",${link.value}\n`;
             });
 
@@ -928,7 +1048,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'people-places-network.csv';
+            a.download = 'social-network.csv';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1001,8 +1121,8 @@
         function renderWordCloud() {
             const container = document.getElementById('word-cloud');
 
-            // Get top 40 words from word cloud data
-            const words = textAnalysisData.word_cloud_data.slice(0, 40);
+            // Get top 50 words from word cloud data
+            const words = textAnalysisData.word_cloud_data.slice(0, 50);
 
             // Calculate font size range
             const maxSize = words[0].size;
@@ -1010,10 +1130,10 @@
 
             let html = '';
             words.forEach(word => {
-                // Scale font size from 0.8rem to 2.5rem
+                // Scale font size from 0.9rem to 3.5rem with more dramatic variation
                 const scale = (word.size - minSize) / (maxSize - minSize);
-                const fontSize = 0.8 + (scale * 1.7);
-                const opacity = 0.5 + (scale * 0.5);
+                const fontSize = 0.9 + (scale * 2.6);
+                const opacity = 0.6 + (scale * 0.4);
 
                 html += `<span style="font-size: ${fontSize}rem; opacity: ${opacity};"
                               title="${word.text}: ${word.size} occurrences">${word.text}</span>`;
@@ -1156,7 +1276,7 @@
                 .selectAll('line')
                 .data(links)
                 .join('line')
-                .attr('class', 'network-link')
+                .attr('class', d => `network-link ${d.linkType}`)
                 .attr('stroke-width', d => Math.sqrt(d.value) * 0.5);
 
             // Create node elements
@@ -1278,26 +1398,31 @@
         function renderTimeline() {
             const container = document.getElementById('timeline');
 
-            // Get date range
-            const allDates = [
-                ...timelineData.london_events.map(e => new Date(e.date)),
-                ...timelineData.shawville_events.map(e => new Date(e.date))
-            ];
-            const minDate = new Date(Math.min(...allDates));
-            const maxDate = new Date(Math.max(...allDates));
-            const dateRange = maxDate - minDate;
+            // Get separate date ranges for London and Shawville
+            const londonDates = timelineData.london_events.map(e => new Date(e.date));
+            const shawvilleDates = timelineData.shawville_events.map(e => new Date(e.date));
+
+            const londonMinDate = new Date(Math.min(...londonDates));
+            const londonMaxDate = new Date(Math.max(...londonDates));
+            const londonDateRange = londonMaxDate - londonMinDate;
+
+            const allDates = [...londonDates, ...shawvilleDates];
+            const globalMinDate = new Date(Math.min(...allDates));
+            const globalMaxDate = new Date(Math.max(...allDates));
+            const globalDateRange = globalMaxDate - globalMinDate;
 
             // Build HTML
             let html = '';
 
-            // London track
+            // London track - uses its own focused scale
             html += '<div class="timeline-track">';
-            html += '<div class="timeline-label london">London Events</div>';
+            html += '<div class="timeline-label london">London Events <small style="opacity: 0.7;">(Aug-Nov 1888)</small></div>';
             html += '<div class="timeline-line"></div>';
             html += '<div class="timeline-events">';
             timelineData.london_events.forEach(event => {
                 const date = new Date(event.date);
-                const position = ((date - minDate) / dateRange) * 100;
+                // Use London-specific scale to spread out the events
+                const position = ((date - londonMinDate) / londonDateRange) * 100;
                 const className = event.type === 'murder' ? 'murder' : 'london';
                 html += `
                     <div class="timeline-event" style="left: ${position}%"
@@ -1310,14 +1435,15 @@
             });
             html += '</div></div>';
 
-            // Shawville track
+            // Shawville track - uses global scale to show time lag
             html += '<div class="timeline-track" style="margin-top: 3rem;">';
-            html += '<div class="timeline-label shawville">Shawville Publications</div>';
+            html += '<div class="timeline-label shawville">Shawville Publications <small style="opacity: 0.7;">(1888-1895)</small></div>';
             html += '<div class="timeline-line"></div>';
             html += '<div class="timeline-events">';
             timelineData.shawville_events.forEach(event => {
                 const date = new Date(event.date);
-                const position = ((date - minDate) / dateRange) * 100;
+                // Use global scale to show distribution over time
+                const position = ((date - globalMinDate) / globalDateRange) * 100;
                 html += `
                     <div class="timeline-event" style="left: ${position}%"
                          data-event="${event.article_id}"
