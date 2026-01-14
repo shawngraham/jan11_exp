@@ -464,6 +464,17 @@
             stroke-opacity: 0.3;
         }
 
+        .network-link.person-person {
+            stroke: #d4af37;
+            stroke-opacity: 0.4;
+            stroke-dasharray: 3,3;
+        }
+
+        .network-link.person-place {
+            stroke: #999;
+            stroke-opacity: 0.3;
+        }
+
         .network-label {
             font-size: 10px;
             pointer-events: none;
@@ -642,8 +653,9 @@
         <div class="section">
             <h2>People & Places Network</h2>
             <p style="margin-bottom: 1rem; color: var(--color-ink-light);">
-                Who was connected to where? People (red) and places (green) are linked when mentioned in the same article.
-                Node size reflects how frequently they appear together.
+                Who was connected to where, and to whom? This network shows people (red) and places (green) mentioned together in articles.
+                Solid lines connect people to places, while dashed gold lines show people mentioned together.
+                Node size reflects frequency of mentions.
             </p>
             <div class="network-controls">
                 <button class="network-control-btn active" data-network-filter="all">All Connections</button>
@@ -666,6 +678,18 @@
                 <div class="network-legend-item">
                     <div class="network-legend-dot place"></div>
                     <span>Places (locations mentioned)</span>
+                </div>
+                <div class="network-legend-item">
+                    <svg width="30" height="2" style="margin-right: 0.5rem;">
+                        <line x1="0" y1="1" x2="30" y2="1" stroke="#999" stroke-width="2" />
+                    </svg>
+                    <span>Person-Place connection</span>
+                </div>
+                <div class="network-legend-item">
+                    <svg width="30" height="2" style="margin-right: 0.5rem;">
+                        <line x1="0" y1="1" x2="30" y2="1" stroke="#d4af37" stroke-width="2" stroke-dasharray="3,3" />
+                    </svg>
+                    <span>Person-Person connection</span>
                 </div>
                 <div class="network-legend-item">
                     <span style="color: var(--color-ink-light);">
@@ -764,19 +788,48 @@
 
             const locations = [];
             const locationPatterns = {
+                // Major international cities
                 'London': /\blondon\b/i,
                 'Whitechapel': /\bwhitechapel\b/i,
                 'Edinburgh': /\bedinburgh\b/i,
                 'Paris': /\bparis\b/i,
+                'New York': /\bnew york\b/i,
                 'United States': /\bunited states\b/i,
+
+                // Countries and regions
                 'England': /\bengland\b/i,
                 'Scotland': /\bscotland\b/i,
                 'Ireland': /\bireland\b/i,
+
+                // Canadian major cities
                 'Ottawa': /\bottawa\b/i,
                 'Toronto': /\btoronto\b/i,
                 'Montreal': /\bmontreal\b/i,
+                'Quebec City': /\bquebec city\b/i,
                 'Quebec': /\bquebec\b/i,
-                'Shawville': /\bshawville\b/i
+
+                // Pontiac County and nearby communities
+                'Shawville': /\bshawville\b/i,
+                'Pontiac': /\bpontiac\b/i,
+                'Aylmer': /\baylmer\b/i,
+                'Hull': /\bhull\b/i,
+                'Bryson': /\bbryson\b/i,
+                'Campbell\'s Bay': /\bcampbell'?s?\s+bay\b/i,
+                'Fort Coulonge': /\bfort\s+coulonge\b/i,
+                'Portage-du-Fort': /\bportage[- ]du[- ]fort\b/i,
+                'Quyon': /\bquyon\b/i,
+                'Bristol': /\bbristol\b/i,
+                'Litchfield': /\blitchfield\b/i,
+                'Clarendon': /\bclarendon\b/i,
+                'Thorne': /\bthorne\b/i,
+                'Alleyn': /\balleyn\b/i,
+                'Calumet': /\bcalumet\b/i,
+                'Chapeau': /\bchapeau\b/i,
+                'Norway Bay': /\bnorway\s+bay\b/i,
+                'Pembroke': /\bpembroke\b/i,
+                'Renfrew': /\brenfrew\b/i,
+                'Arnprior': /\barnprior\b/i,
+                'Eganville': /\beganville\b/i
             };
 
             for (const [location, pattern] of Object.entries(locationPatterns)) {
@@ -886,16 +939,42 @@
                 // Create links between people and places in same article
                 people.forEach(person => {
                     places.forEach(place => {
-                        const linkId = `${person}-${place}`;
+                        const linkId = `${person}|${place}`;
                         if (!links.has(linkId)) {
-                            links.set(linkId, { source: person, target: place, value: 0 });
+                            links.set(linkId, {
+                                source: person,
+                                target: place,
+                                value: 0,
+                                linkType: 'person-place'
+                            });
                         }
                         links.get(linkId).value++;
                     });
                 });
+
+                // Create links between people mentioned in same article
+                for (let i = 0; i < people.length; i++) {
+                    for (let j = i + 1; j < people.length; j++) {
+                        const person1 = people[i];
+                        const person2 = people[j];
+                        // Sort names to create consistent link IDs
+                        const [source, target] = [person1, person2].sort();
+                        const linkId = `${source}|${target}`;
+
+                        if (!links.has(linkId)) {
+                            links.set(linkId, {
+                                source: source,
+                                target: target,
+                                value: 0,
+                                linkType: 'person-person'
+                            });
+                        }
+                        links.get(linkId).value++;
+                    }
+                }
             });
 
-            // Filter to keep only nodes with meaningful connections
+            // Filter to keep only nodes with meaningful connections (at least 2 mentions)
             const nodesArray = Array.from(nodes.values()).filter(n => n.count >= 2);
             const nodeIds = new Set(nodesArray.map(n => n.id));
             const linksArray = Array.from(links.values())
@@ -917,9 +996,7 @@
             currentNetworkData.links.forEach(link => {
                 const source = typeof link.source === 'object' ? link.source.id : link.source;
                 const target = typeof link.target === 'object' ? link.target.id : link.target;
-                const sourceType = currentNetworkData.nodes.find(n => n.id === source)?.type || 'unknown';
-                const targetType = currentNetworkData.nodes.find(n => n.id === target)?.type || 'unknown';
-                const type = `${sourceType}-${targetType}`;
+                const type = link.linkType || 'unknown';
                 csv += `"${source}","${target}","${type}",${link.value}\n`;
             });
 
@@ -928,7 +1005,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'people-places-network.csv';
+            a.download = 'social-network.csv';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1156,7 +1233,7 @@
                 .selectAll('line')
                 .data(links)
                 .join('line')
-                .attr('class', 'network-link')
+                .attr('class', d => `network-link ${d.linkType}`)
                 .attr('stroke-width', d => Math.sqrt(d.value) * 0.5);
 
             // Create node elements
