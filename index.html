@@ -675,6 +675,71 @@
             display: block;
         }
 
+        /* Space Invasion Chart */
+        .space-invasion-container {
+            margin: 2rem 0;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #space-invasion-svg {
+            width: 100%;
+            height: 500px;
+        }
+
+        .space-invasion-legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .space-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .space-legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .area-whitechapel { fill: var(--color-ripper); opacity: 0.8; }
+        .area-burke { fill: #8B4513; opacity: 0.8; }
+        .area-crime { fill: #4682B4; opacity: 0.7; }
+        .area-local { fill: var(--color-shawville); opacity: 0.7; }
+        .area-other { fill: #d4c5a9; opacity: 0.6; }
+
+        .axis-label {
+            font-size: 0.9rem;
+            fill: var(--color-ink-light);
+        }
+
+        /* OCR Warning */
+        .ocr-warning {
+            background: #fff9e6;
+            border-left: 4px solid #f39c12;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .ocr-warning strong {
+            color: #d68910;
+            font-size: 1.05rem;
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 2rem; }
             .article-grid { grid-template-columns: 1fr; }
@@ -814,21 +879,50 @@
             </div>
         </div>
 
-        <!-- Timeline -->
+        <!-- Space Invasion -->
         <div class="section">
-            <h2>Timeline: London to Shawville</h2>
-            <p style="margin-bottom: 2rem; color: var(--color-ink-light); font-style: italic;">
-                The London timeline shows events on a focused scale (August-November 1888) to reveal individual murders and investigations.
-                The Shawville timeline uses a broader scale (1888-1895) to show how coverage extended across years.
+            <h2>The Invasion: How Much Space Did Horror Claim?</h2>
+            <p style="margin-bottom: 1.5rem; color: var(--color-ink-light); font-style: italic; font-size: 1.1rem;">
+                Between 1888 and 1895, Whitechapel murders and Burke & Hare retrospectives "invaded" The Equity's pages.
+                This chart shows the proportion of content devoted to different topics over time.
+                Watch how distant horrors flood local news space—especially in autumn 1888.
             </p>
-            <div class="timeline" id="timeline">
-                <div class="loading">Loading timeline...</div>
+            <div class="space-invasion-container">
+                <svg id="space-invasion-svg"></svg>
+            </div>
+            <div class="space-invasion-legend">
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: var(--color-ripper);"></div>
+                    <span>Whitechapel/Ripper</span>
+                </div>
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: #8B4513;"></div>
+                    <span>Burke & Hare</span>
+                </div>
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: #4682B4;"></div>
+                    <span>General Crime</span>
+                </div>
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: var(--color-shawville);"></div>
+                    <span>Local Violence</span>
+                </div>
+                <div class="space-legend-item">
+                    <div class="space-legend-box" style="background: #d4c5a9;"></div>
+                    <span>Other Content</span>
+                </div>
             </div>
         </div>
 
         <!-- Articles -->
         <div class="section">
             <h2>The Articles</h2>
+
+            <!-- OCR Warning -->
+            <div class="ocr-warning">
+                <strong>⚠️ Note on OCR Quality:</strong> The best OCR would be to get a commercial grade vision model to examine all of these snippets. I am experimenting with pytesseract and the surya model. You will see some quite odd things! Always check the original snippets.
+            </div>
+
             <div class="filters">
                 <button class="filter-btn active" data-filter="whitechapel">Whitechapel/Ripper</button>
                 <button class="filter-btn" data-filter="burke">Burke & Hare</button>
@@ -1163,7 +1257,7 @@
                 renderWordCloud();
                 renderGeoMap();
                 renderNetwork('all');
-                renderTimeline();
+                renderSpaceInvasion();
                 renderArticles();
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -1470,122 +1564,139 @@
             }
         }
 
-        // Render timeline
-        function renderTimeline() {
-            const container = document.getElementById('timeline');
+        // Render Space Invasion visualization
+        function renderSpaceInvasion() {
+            const svg = d3.select('#space-invasion-svg');
+            svg.selectAll('*').remove();
 
-            // Get separate date ranges for London and Shawville
-            const londonDates = timelineData.london_events.map(e => new Date(e.date));
-            const shawvilleDates = timelineData.shawville_events.map(e => new Date(e.date));
+            const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+            const width = svg.node().clientWidth - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
 
-            const londonMinDate = new Date(Math.min(...londonDates));
-            const londonMaxDate = new Date(Math.max(...londonDates));
-            const londonDateRange = londonMaxDate - londonMinDate;
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
 
-            const allDates = [...londonDates, ...shawvilleDates];
-            const globalMinDate = new Date(Math.min(...allDates));
-            const globalMaxDate = new Date(Math.max(...allDates));
-            const globalDateRange = globalMaxDate - globalMinDate;
+            // Group articles by month and categorize
+            const monthlyData = d3.rollup(
+                articlesData,
+                articles => {
+                    const whitechapel = articles.filter(a => a.is_whitechapel || a.is_ripper_related);
+                    const burke = articles.filter(isBurkeHare);
+                    const crime = articles.filter(isGeneralCrime);
+                    const local = articles.filter(isLocalViolence);
+                    const other = articles.filter(a =>
+                        !whitechapel.includes(a) && !burke.includes(a) &&
+                        !crime.includes(a) && !local.includes(a)
+                    );
 
-            // Build HTML
-            let html = '';
+                    return {
+                        whitechapel: d3.sum(whitechapel, d => d.word_count || 0),
+                        burke: d3.sum(burke, d => d.word_count || 0),
+                        crime: d3.sum(crime, d => d.word_count || 0),
+                        local: d3.sum(local, d => d.word_count || 0),
+                        other: d3.sum(other, d => d.word_count || 0)
+                    };
+                },
+                d => {
+                    const date = new Date(d.date);
+                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                }
+            );
 
-            // London track - uses its own focused scale
-            html += '<div class="timeline-track">';
-            html += '<div class="timeline-label london">London Events <small style="opacity: 0.7;">(Aug-Nov 1888)</small></div>';
-            html += '<div class="timeline-line"></div>';
-            html += '<div class="timeline-events">';
-            timelineData.london_events.forEach(event => {
-                const date = new Date(event.date);
-                // Use London-specific scale to spread out the events
-                const position = ((date - londonMinDate) / londonDateRange) * 100;
-                const className = event.type === 'murder' ? 'murder' : 'london';
-                html += `
-                    <div class="timeline-event" style="left: ${position}%"
-                         data-event="${event.id}"
-                         data-type="london">
-                        <div class="event-marker ${className}"></div>
-                        <div class="event-label">${event.title}</div>
-                    </div>
-                `;
+            // Convert to array and sort by date
+            const dataArray = Array.from(monthlyData, ([key, value]) => ({
+                date: new Date(key + '-01'),
+                ...value
+            })).sort((a, b) => a.date - b.date);
+
+            // Calculate percentages
+            dataArray.forEach(d => {
+                const total = d.whitechapel + d.burke + d.crime + d.local + d.other;
+                d.whitechapelPct = total > 0 ? (d.whitechapel / total) * 100 : 0;
+                d.burkePct = total > 0 ? (d.burke / total) * 100 : 0;
+                d.crimePct = total > 0 ? (d.crime / total) * 100 : 0;
+                d.localPct = total > 0 ? (d.local / total) * 100 : 0;
+                d.otherPct = total > 0 ? (d.other / total) * 100 : 0;
             });
-            html += '</div></div>';
 
-            // Shawville track - uses global scale to show time lag
-            html += '<div class="timeline-track" style="margin-top: 3rem;">';
-            html += '<div class="timeline-label shawville">Shawville Publications <small style="opacity: 0.7;">(1888-1895)</small></div>';
-            html += '<div class="timeline-line"></div>';
-            html += '<div class="timeline-events">';
-            timelineData.shawville_events.forEach(event => {
-                const date = new Date(event.date);
-                // Use global scale to show distribution over time
-                const position = ((date - globalMinDate) / globalDateRange) * 100;
-                html += `
-                    <div class="timeline-event" style="left: ${position}%"
-                         data-event="${event.article_id}"
-                         data-type="shawville">
-                        <div class="event-marker shawville"></div>
-                        <div class="event-label">${event.date_display}</div>
-                    </div>
-                `;
-            });
-            html += '</div></div>';
+            // Scales
+            const x = d3.scaleTime()
+                .domain(d3.extent(dataArray, d => d.date))
+                .range([0, width]);
 
-            container.innerHTML = html;
+            const y = d3.scaleLinear()
+                .domain([0, 100])
+                .range([height, 0]);
 
-            // Add event listeners
-            document.querySelectorAll('.timeline-event').forEach(el => {
-                el.addEventListener('mouseenter', showTooltip);
-                el.addEventListener('mouseleave', hideTooltip);
-                el.addEventListener('click', handleTimelineClick);
-            });
-        }
+            // Stack the data
+            const stack = d3.stack()
+                .keys(['otherPct', 'localPct', 'crimePct', 'burkePct', 'whitechapelPct'])
+                .order(d3.stackOrderNone)
+                .offset(d3.stackOffsetNone);
 
-        // Show tooltip
-        function showTooltip(e) {
-            const eventId = e.currentTarget.dataset.event;
-            const eventType = e.currentTarget.dataset.type;
-            const tooltip = document.getElementById('tooltip');
+            const stackedData = stack(dataArray);
 
-            let content = '';
-            if (eventType === 'london') {
-                const event = timelineData.london_events.find(ev => ev.id === eventId);
-                content = `
-                    <strong>${event.title}</strong><br>
-                    ${event.date}<br>
-                    ${event.location}<br>
-                    <em>${event.description}</em>
-                `;
-            } else {
-                const event = timelineData.shawville_events.find(ev => ev.article_id === eventId);
-                content = `
-                    <strong>The Equity</strong><br>
-                    ${event.date_display}<br>
-                    ${event.time_lag_days} days after ${event.correlated_event}
-                `;
-            }
+            // Area generator
+            const area = d3.area()
+                .x(d => x(d.data.date))
+                .y0(d => y(d[0]))
+                .y1(d => y(d[1]))
+                .curve(d3.curveMonotoneX);
 
-            tooltip.innerHTML = content;
-            tooltip.classList.add('visible');
+            // Color mapping
+            const colorMap = {
+                'whitechapelPct': 'area-whitechapel',
+                'burkePct': 'area-burke',
+                'crimePct': 'area-crime',
+                'localPct': 'area-local',
+                'otherPct': 'area-other'
+            };
 
-            const rect = e.currentTarget.getBoundingClientRect();
-            tooltip.style.left = rect.left + 'px';
-            tooltip.style.top = (rect.bottom + 10) + 'px';
-        }
+            // Draw areas
+            g.selectAll('.area')
+                .data(stackedData)
+                .join('path')
+                .attr('class', d => colorMap[d.key] || 'area-other')
+                .attr('d', area)
+                .append('title')
+                .text(d => d.key.replace('Pct', ''));
 
-        function hideTooltip() {
-            document.getElementById('tooltip').classList.remove('visible');
-        }
+            // Add axes
+            const xAxis = d3.axisBottom(x)
+                .ticks(d3.timeYear.every(1))
+                .tickFormat(d3.timeFormat('%Y'));
 
-        // Handle timeline click
-        function handleTimelineClick(e) {
-            const eventId = e.currentTarget.dataset.event;
-            const eventType = e.currentTarget.dataset.type;
+            const yAxis = d3.axisLeft(y)
+                .ticks(5)
+                .tickFormat(d => d + '%');
 
-            if (eventType === 'shawville') {
-                const article = articlesData.find(a => a.article_id === eventId);
-                if (article) showArticleModal(article);
-            }
+            g.append('g')
+                .attr('transform', `translate(0,${height})`)
+                .call(xAxis)
+                .selectAll('text')
+                .attr('transform', 'rotate(-45)')
+                .style('text-anchor', 'end');
+
+            g.append('g')
+                .call(yAxis);
+
+            // Axis labels
+            g.append('text')
+                .attr('class', 'axis-label')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', -45)
+                .attr('x', -height / 2)
+                .attr('text-anchor', 'middle')
+                .text('Percentage of Content');
+
+            g.append('text')
+                .attr('class', 'axis-label')
+                .attr('x', width / 2)
+                .attr('y', height + 50)
+                .attr('text-anchor', 'middle')
+                .text('Publication Date');
+
+            console.log('Space invasion visualization rendered with', dataArray.length, 'data points');
         }
 
         // Render articles
